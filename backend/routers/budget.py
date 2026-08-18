@@ -1,14 +1,15 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Query
 
-from db import USER_DATA_DIR, get_connection
+from config import DATA_DIR
+from db import get_connection
 from models import BudgetUpdate
 from services.json_store import read_json, write_json
 from services import analytics
 
 router = APIRouter(prefix="/api/budget", tags=["budget"])
 
-BUDGET_PATH = USER_DATA_DIR / "budget.json"
+BUDGET_PATH = DATA_DIR / "budget.json"
 
 DEFAULT_BUDGET = {"categories": [], "history": [], "income": None}
 

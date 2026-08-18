@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import { UploadModalProvider } from './context/UploadModalContext'
@@ -7,12 +8,68 @@ import UploadPreview from './pages/UploadPreview'
 import Budget from './pages/Budget'
 import Analysis from './pages/Analysis'
 import Settings from './pages/Settings'
+import Login from './pages/Login'
+import { api, clearStoredApiKey, getStoredApiKey } from './api/client'
 
 export default function App() {
+  const [authState, setAuthState] = useState('checking') // 'checking' | 'locked' | 'unlocked'
+
+  useEffect(() => {
+    async function checkAuth() {
+      const key = getStoredApiKey()
+      if (!key) {
+        // No stored key — probe whether the server requires auth at all.
+        try {
+          await api.get('/api/settings')
+          setAuthState('unlocked')
+        } catch (err) {
+          setAuthState(err.status === 401 ? 'locked' : 'unlocked')
+        }
+        return
+      }
+
+      try {
+        await api.get('/api/settings')
+        setAuthState('unlocked')
+      } catch {
+        setAuthState('locked')
+      }
+    }
+
+    checkAuth()
+
+    function onUnauthorized() {
+      setAuthState('locked')
+    }
+    window.addEventListener('budget-app-unauthorized', onUnauthorized)
+    return () => window.removeEventListener('budget-app-unauthorized', onUnauthorized)
+  }, [])
+
+  function handleLoginSuccess() {
+    setAuthState('unlocked')
+  }
+
+  function handleLogout() {
+    clearStoredApiKey()
+    setAuthState('locked')
+  }
+
+  if (authState === 'checking') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-sm text-ink-500">Loading…</p>
+      </div>
+    )
+  }
+
+  if (authState === 'locked') {
+    return <Login onSuccess={handleLoginSuccess} />
+  }
+
   return (
     <UploadModalProvider>
       <div className="min-h-screen">
-        <NavBar />
+        <NavBar onLogout={handleLogout} />
         <main className="max-w-6xl mx-auto px-6 py-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />

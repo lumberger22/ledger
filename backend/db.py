@@ -6,14 +6,11 @@ All *charges* (pending and confirmed) live here. Everything else
 services/json_store.py.
 """
 import sqlite3
-from pathlib import Path
 
-# All data lives in <project_root>/user_data, per the implementation plan.
-BASE_DIR = Path(__file__).resolve().parent.parent
-USER_DATA_DIR = BASE_DIR / "user_data"
-USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+from config import DATA_DIR, DB_PATH
 
-DB_PATH = USER_DATA_DIR / "charges.db"
+# Ensure the data directory exists (config.py already mkdirs, but be safe).
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS charges (

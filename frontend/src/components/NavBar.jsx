@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Receipt, PiggyBank, LineChart, Settings as SettingsIcon, Upload, Wallet } from 'lucide-react'
+import { LayoutDashboard, Receipt, PiggyBank, LineChart, Settings as SettingsIcon, Upload, Wallet, LogOut } from 'lucide-react'
 import { useUploadModal } from '../context/UploadModalContext'
+import { getStoredApiKey } from '../api/client'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -10,8 +11,9 @@ const navItems = [
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
-export default function NavBar() {
+export default function NavBar({ onLogout }) {
   const { open } = useUploadModal()
+  const hasApiKey = Boolean(getStoredApiKey())
 
   return (
     <header className="sticky top-0 z-20 bg-canvas/90 backdrop-blur border-b border-line">
@@ -44,7 +46,17 @@ export default function NavBar() {
           </nav>
         </div>
 
-        <div>
+        <div className="flex items-center gap-2">
+          {hasApiKey && onLogout && (
+            <button
+              onClick={onLogout}
+              title="Lock app"
+              className="flex items-center gap-1.5 text-ink-500 hover:text-ink-900 text-sm font-medium px-2.5 py-2 rounded-lg hover:bg-black/5"
+            >
+              <LogOut size={15} />
+              <span className="hidden sm:inline">Lock</span>
+            </button>
+          )}
           <button
             onClick={open}
             className="flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors shadow-card"

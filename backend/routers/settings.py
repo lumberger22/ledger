@@ -1,18 +1,22 @@
 import io
+import shutil
 import zipfile
-from fastapi import APIRouter
+from pathlib import Path
+
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import StreamingResponse
 
-from db import USER_DATA_DIR, DB_PATH, get_connection, init_db
+from config import DATA_DIR
+from db import DB_PATH, get_connection, init_db
 from models import Settings
 from services.json_store import read_json, write_json
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
-SETTINGS_PATH = USER_DATA_DIR / "settings.json"
+SETTINGS_PATH = DATA_DIR / "settings.json"
 
 DEFAULT_SETTINGS = {
-    "data_folder": str(USER_DATA_DIR),
+    "data_folder": str(DATA_DIR),
     "currency": "USD",
     "date_format": "MM/DD/YYYY",
     "csv_column_mapping": {
@@ -49,12 +53,43 @@ def download_backup():
         if DB_PATH.exists():
             zf.write(DB_PATH, arcname="charges.db")
         for name in ("settings.json", "budget.json", "analysis_cache.json"):
-            p = USER_DATA_DIR / name
+            p = DATA_DIR / name
             if p.exists():
                 zf.write(p, arcname=name)
     buffer.seek(0)
     headers = {"Content-Disposition": "attachment; filename=budget-app-backup.zip"}
     return StreamingResponse(buffer, media_type="application/zip", headers=headers)
+
+
+ALLOWED_BACKUP_FILES = {"charges.db", "settings.json", "budget.json", "analysis_cache.json"}
+
+
+@router.post("/restore")
+async def restore_backup(file: UploadFile = File(...)):
+    """Restore data from a backup zip (same format as /backup download)."""
+    if not file.filename or not file.filename.lower().endswith(".zip"):
+        return {"restored": False, "message": "Upload a .zip backup file."}
+
+    content = await file.read()
+    restored: list[str] = []
+
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        for name in zf.namelist():
+            # Ignore directories and macOS metadata.
+            if name.endswith("/") or name.startswith("__MACOSX"):
+                continue
+            basename = Path(name).name
+            if basename not in ALLOWED_BACKUP_FILES:
+                continue
+            dest = DATA_DIR / basename
+            with zf.open(name) as src, open(dest, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            restored.append(basename)
+
+    if "charges.db" in restored:
+        init_db()
+
+    return {"restored": True, "files": restored}
 
 
 @router.post("/reset")
@@ -70,7 +105,7 @@ def reset_all_data(confirm: bool = False):
     finally:
         conn.close()
 
-    write_json(USER_DATA_DIR / "budget.json", {"categories": [], "history": [], "income": None})
+    write_json(DATA_DIR / "budget.json", {"categories": [], "history": [], "income": None})
     write_json(SETTINGS_PATH, DEFAULT_SETTINGS)
 
     init_db()

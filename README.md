@@ -1,11 +1,12 @@
 # Budget App
 
-A local-only (localhost) credit card budgeting app: upload CSV exports, manually
-categorize every charge, track a monthly budget by category, and view spending
-analysis over time. No login — everything runs on your own machine.
+A credit card budgeting app: upload CSV exports, manually categorize every
+charge, track a monthly budget by category, and view spending analysis over time.
 
-Built from the implementation plan: FastAPI + SQLite backend, React + Vite +
-Tailwind frontend.
+Runs locally on your machine **or** on [Railway](#deploy-to-railway) as a private
+web app with remote storage.
+
+Built with FastAPI + SQLite backend, React + Vite + Tailwind frontend.
 
 ---
 
@@ -118,3 +119,66 @@ Nothing leaves your machine. You can back all of it up any time from
   it's directly comparable to your monthly target.
 - Split charges (one purchase across two categories) aren't supported yet —
   noted as a v1.1 feature in the original plan.
+
+---
+
+## Deploy to Railway
+
+Host the app as a private web app with persistent remote storage. Local dev is
+unchanged — auth is only enforced when `API_KEY` is set on the server.
+
+### 1. Back up your local data
+
+Before migrating, download a backup from **Settings → Download Backup** in the
+local app (or copy the `user_data/` folder).
+
+### 2. Create the Railway project
+
+1. Push this repo to GitHub (if it isn't already).
+2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**.
+3. Select this repository. Railway detects the `Dockerfile` via `railway.toml`.
+
+### 3. Add a persistent volume
+
+1. In your Railway service, open **Volumes** → **Add Volume**.
+2. Mount path: `/data`
+3. Size: 1 GB is plenty for personal use.
+
+### 4. Set environment variables
+
+In **Variables**, add:
+
+| Variable | Value |
+|----------|-------|
+| `DATA_DIR` | `/data` |
+| `API_KEY` | A long random string (e.g. `openssl rand -hex 32`) |
+
+Railway sets `PORT` automatically — don't override it.
+
+### 5. Deploy and restore your data
+
+1. Wait for the first deploy to finish. Railway gives you a public URL like
+   `https://your-app.up.railway.app`.
+2. Open the URL — you'll see a login screen. Enter the `API_KEY` you set.
+3. Go to **Settings → Restore from Backup** and upload the zip from step 1.
+4. Reload — your categories, charges, and settings should match your local copy.
+
+### 6. Ongoing use
+
+- The Railway URL is your app from any browser.
+- Click **Lock** in the nav bar to clear the session API key.
+- Download backups regularly from **Settings** (same as local).
+- Keep using the local install only if you want an offline copy — pick one
+  source of truth to avoid drift.
+
+### Local dev vs production
+
+| | Local (`run.bat`) | Railway |
+|--|-------------------|---------|
+| Auth | Off (no `API_KEY`) | On (`API_KEY` required) |
+| Data | `./user_data/` | `/data` volume |
+| Frontend | Vite dev server (:5173) | Served by FastAPI (same URL) |
+| API URL | `http://localhost:8000` | Same origin (no config needed) |
+
+To test auth locally, set `API_KEY=something` in your shell before starting
+the backend.

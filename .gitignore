@@ -18,3 +18,7 @@ user_data/*.bak
 .DS_Store
 .vscode/
 .idea/
+
+# Env
+.env
+.env.local

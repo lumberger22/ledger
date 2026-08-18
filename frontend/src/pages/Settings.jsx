@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Download, AlertTriangle, Check, FolderOpen, PiggyBank } from 'lucide-react'
-import { getSettings, updateSettings, backupUrl, resetAllData } from '../api/settings'
+import { Download, Upload as UploadIcon, AlertTriangle, Check, FolderOpen, PiggyBank } from 'lucide-react'
+import { getSettings, updateSettings, downloadBackup, restoreBackup, resetAllData } from '../api/settings'
 import { getBudget, updateBudget } from '../api/budget'
 import { Link } from 'react-router-dom'
 
@@ -10,6 +10,8 @@ export default function Settings() {
   const [saved, setSaved] = useState(false)
   const [resetConfirming, setResetConfirming] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [restoring, setRestoring] = useState(false)
+  const [restoreMessage, setRestoreMessage] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -25,6 +27,23 @@ export default function Settings() {
     await updateSettings(settings)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function handleRestore(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setRestoring(true)
+    setRestoreMessage('')
+    try {
+      const result = await restoreBackup(file)
+      setRestoreMessage(`Restored: ${result.files?.join(', ') || 'backup files'}. Reloading…`)
+      setTimeout(() => window.location.reload(), 1500)
+    } catch (err) {
+      setRestoreMessage(err.message || 'Restore failed.')
+    } finally {
+      setRestoring(false)
+      e.target.value = ''
+    }
   }
 
   async function handleReset() {
@@ -167,14 +186,24 @@ export default function Settings() {
       <section className="bg-surface border border-line rounded-xl2 shadow-card p-6 space-y-3">
         <p className="font-display font-semibold text-ink-900">Backup & Export</p>
         <p className="text-sm text-ink-500">
-          Download the SQLite database and JSON config files as a single zip.
+          Download the SQLite database and JSON config files as a single zip. Use restore to migrate
+          data from a local install to Railway.
         </p>
-        <a
-          href={backupUrl()}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent border border-accent/30 hover:bg-accent-light px-3.5 py-2 rounded-lg"
-        >
-          <Download size={15} /> Download Backup
-        </a>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => downloadBackup().catch((err) => alert(err.message))}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent border border-accent/30 hover:bg-accent-light px-3.5 py-2 rounded-lg"
+          >
+            <Download size={15} /> Download Backup
+          </button>
+          <label className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 px-3.5 py-2 rounded-lg cursor-pointer">
+            <UploadIcon size={15} />
+            {restoring ? 'Restoring…' : 'Restore from Backup'}
+            <input type="file" accept=".zip" className="hidden" onChange={handleRestore} disabled={restoring} />
+          </label>
+        </div>
+        {restoreMessage && <p className="text-sm text-ink-600">{restoreMessage}</p>}
       </section>
 
       <section className="bg-over/5 border border-over/30 rounded-xl2 p-6 space-y-3">

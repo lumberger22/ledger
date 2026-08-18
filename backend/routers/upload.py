@@ -1,13 +1,14 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
-from db import USER_DATA_DIR, get_connection
+from config import DATA_DIR
+from db import get_connection
 from services.csv_parser import parse_csv, CsvParseError
 from services.json_store import read_json
 from services.analytics import find_prior_categorizations
 
 router = APIRouter(prefix="/api/upload", tags=["upload"])
 
-SETTINGS_PATH = USER_DATA_DIR / "settings.json"
+SETTINGS_PATH = DATA_DIR / "settings.json"
 DEFAULT_CC_MAPPING = {"date": "DATE", "amount": "AMOUNT", "description": "DESCRIPTION"}
 DEFAULT_CHECKING_MAPPING = {"date": "Date", "amount": "Amount", "description": "Description"}
 ACCOUNT_TYPES = {"credit_card", "checking"}

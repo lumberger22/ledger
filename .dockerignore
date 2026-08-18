@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# Local data — never bake personal finances into the image
+user_data/
+
+# Python
+backend/.venv
+backend/**/__pycache__
+**/*.pyc
+
+# Node
+frontend/node_modules
+frontend/dist
+
+# Editor / OS
+.DS_Store
+.vscode
+.idea
+
+# Docs / dev
+*.md
+run.bat
+run.sh
