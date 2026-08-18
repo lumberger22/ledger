@@ -1,69 +1,70 @@
-import { useEffect, useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
-import NavBar from './components/NavBar'
-import { UploadModalProvider } from './context/UploadModalContext'
-import Dashboard from './pages/Dashboard'
-import Charges from './pages/Charges'
-import UploadPreview from './pages/UploadPreview'
-import Budget from './pages/Budget'
-import Analysis from './pages/Analysis'
-import Settings from './pages/Settings'
-import Login from './pages/Login'
-import { api, clearStoredApiKey, getStoredApiKey } from './api/client'
+import { useEffect, useState } from "react";
+import { Routes, Route } from "react-router-dom";
+import NavBar from "./components/NavBar";
+import { UploadModalProvider } from "./context/UploadModalContext";
+import Dashboard from "./pages/Dashboard";
+import Charges from "./pages/Charges";
+import UploadPreview from "./pages/UploadPreview";
+import Budget from "./pages/Budget";
+import Analysis from "./pages/Analysis";
+import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import { api, clearStoredApiKey, getStoredApiKey } from "./api/client";
 
 export default function App() {
-  const [authState, setAuthState] = useState('checking') // 'checking' | 'locked' | 'unlocked'
+  const [authState, setAuthState] = useState("checking"); // 'checking' | 'locked' | 'unlocked'
 
   useEffect(() => {
     async function checkAuth() {
-      const key = getStoredApiKey()
+      const key = getStoredApiKey();
       if (!key) {
         // No stored key — probe whether the server requires auth at all.
         try {
-          await api.get('/api/settings')
-          setAuthState('unlocked')
+          await api.get("/api/settings");
+          setAuthState("unlocked");
         } catch (err) {
-          setAuthState(err.status === 401 ? 'locked' : 'unlocked')
+          setAuthState(err.status === 401 ? "locked" : "unlocked");
         }
-        return
+        return;
       }
 
       try {
-        await api.get('/api/settings')
-        setAuthState('unlocked')
+        await api.get("/api/settings");
+        setAuthState("unlocked");
       } catch {
-        setAuthState('locked')
+        setAuthState("locked");
       }
     }
 
-    checkAuth()
+    checkAuth();
 
     function onUnauthorized() {
-      setAuthState('locked')
+      setAuthState("locked");
     }
-    window.addEventListener('budget-app-unauthorized', onUnauthorized)
-    return () => window.removeEventListener('budget-app-unauthorized', onUnauthorized)
-  }, [])
+    window.addEventListener("budget-app-unauthorized", onUnauthorized);
+    return () =>
+      window.removeEventListener("budget-app-unauthorized", onUnauthorized);
+  }, []);
 
   function handleLoginSuccess() {
-    setAuthState('unlocked')
+    setAuthState("unlocked");
   }
 
   function handleLogout() {
-    clearStoredApiKey()
-    setAuthState('locked')
+    clearStoredApiKey();
+    setAuthState("locked");
   }
 
-  if (authState === 'checking') {
+  if (authState === "checking") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-sm text-ink-500">Loading…</p>
       </div>
-    )
+    );
   }
 
-  if (authState === 'locked') {
-    return <Login onSuccess={handleLoginSuccess} />
+  if (authState === "locked") {
+    return <Login onSuccess={handleLoginSuccess} />;
   }
 
   return (
@@ -82,5 +83,5 @@ export default function App() {
         </main>
       </div>
     </UploadModalProvider>
-  )
+  );
 }

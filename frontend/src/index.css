@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
+html,
+body {
   height: 100%;
 }
 
@@ -12,7 +13,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #C9CFC9 transparent;
+  scrollbar-color: #c9cfc9 transparent;
 }
 
 .tabular {

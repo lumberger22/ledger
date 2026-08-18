@@ -1,19 +1,28 @@
-import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Receipt, PiggyBank, LineChart, Settings as SettingsIcon, Upload, Wallet, LogOut } from 'lucide-react'
-import { useUploadModal } from '../context/UploadModalContext'
-import { getStoredApiKey } from '../api/client'
+import { NavLink } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Receipt,
+  PiggyBank,
+  LineChart,
+  Settings as SettingsIcon,
+  Upload,
+  Wallet,
+  LogOut,
+} from "lucide-react";
+import { useUploadModal } from "../context/UploadModalContext";
+import { getStoredApiKey } from "../api/client";
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/charges', label: 'Charges', icon: Receipt },
-  { to: '/budget', label: 'Budget', icon: PiggyBank },
-  { to: '/analysis', label: 'Analysis', icon: LineChart },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon },
-]
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/charges", label: "Charges", icon: Receipt },
+  { to: "/budget", label: "Budget", icon: PiggyBank },
+  { to: "/analysis", label: "Analysis", icon: LineChart },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
+];
 
 export default function NavBar({ onLogout }) {
-  const { open } = useUploadModal()
-  const hasApiKey = Boolean(getStoredApiKey())
+  const { open } = useUploadModal();
+  const hasApiKey = Boolean(getStoredApiKey());
 
   return (
     <header className="sticky top-0 z-20 bg-canvas/90 backdrop-blur border-b border-line">
@@ -23,19 +32,21 @@ export default function NavBar({ onLogout }) {
             <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
               <Wallet size={16} className="text-white" strokeWidth={2.25} />
             </div>
-            <span className="font-display font-bold text-[15px] tracking-tight">Ledger</span>
+            <span className="font-display font-bold text-[15px] tracking-tight">
+              Ledger
+            </span>
           </div>
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
-                end={to === '/'}
+                end={to === "/"}
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-accent-light text-accent-dark'
-                      : 'text-ink-500 hover:text-ink-900 hover:bg-black/5'
+                      ? "bg-accent-light text-accent-dark"
+                      : "text-ink-500 hover:text-ink-900 hover:bg-black/5"
                   }`
                 }
               >
@@ -71,10 +82,10 @@ export default function NavBar({ onLogout }) {
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end={to === "/"}
             className={({ isActive }) =>
               `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap ${
-                isActive ? 'bg-accent-light text-accent-dark' : 'text-ink-500'
+                isActive ? "bg-accent-light text-accent-dark" : "text-ink-500"
               }`
             }
           >
@@ -84,5 +95,5 @@ export default function NavBar({ onLogout }) {
         ))}
       </nav>
     </header>
-  )
+  );
 }

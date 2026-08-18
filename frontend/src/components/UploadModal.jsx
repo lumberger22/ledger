@@ -1,70 +1,82 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { X, Plus, UploadCloud, Trash2, FileText, Loader2, AlertCircle } from 'lucide-react'
-import { uploadCsv } from '../api/upload'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  X,
+  Plus,
+  UploadCloud,
+  Trash2,
+  FileText,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { uploadCsv } from "../api/upload";
 
 const ACCOUNT_TYPES = [
-  { value: 'credit_card', label: 'Credit Card' },
-  { value: 'checking', label: 'Checking Account' },
-]
+  { value: "credit_card", label: "Credit Card" },
+  { value: "checking", label: "Checking Account" },
+];
 
-let rowIdCounter = 0
-const freshRow = () => ({ id: rowIdCounter++, file: null, accountType: 'credit_card' })
+let rowIdCounter = 0;
+const freshRow = () => ({
+  id: rowIdCounter++,
+  file: null,
+  accountType: "credit_card",
+});
 
 export default function UploadModal({ isOpen, onClose }) {
-  const navigate = useNavigate()
-  const [rows, setRows] = useState([freshRow()])
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState(null)
+  const navigate = useNavigate();
+  const [rows, setRows] = useState([freshRow()]);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   function addRow() {
-    setRows((prev) => [...prev, freshRow()])
+    setRows((prev) => [...prev, freshRow()]);
   }
 
   function removeRow(id) {
-    setRows((prev) => prev.filter((r) => r.id !== id))
+    setRows((prev) => prev.filter((r) => r.id !== id));
   }
 
   function updateRow(id, patch) {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
   function handleFileChange(id, fileList) {
-    const file = fileList?.[0] || null
-    updateRow(id, { file })
+    const file = fileList?.[0] || null;
+    updateRow(id, { file });
   }
 
   function resetAndClose() {
-    setRows([freshRow()])
-    setError(null)
-    setUploading(false)
-    onClose()
+    setRows([freshRow()]);
+    setError(null);
+    setUploading(false);
+    onClose();
   }
 
   async function handleSubmit() {
-    const validRows = rows.filter((r) => r.file)
+    const validRows = rows.filter((r) => r.file);
     if (!validRows.length) {
-      setError('Choose at least one CSV file to upload.')
-      return
+      setError("Choose at least one CSV file to upload.");
+      return;
     }
-    setUploading(true)
-    setError(null)
+    setUploading(true);
+    setError(null);
     try {
       // Each file is parsed with its own account-type column mapping, but
       // all end up in one combined batch so they show together in review.
-      const results = []
+      const results = [];
       for (const row of validRows) {
-        const result = await uploadCsv(row.file, row.accountType)
-        results.push(result)
+        const result = await uploadCsv(row.file, row.accountType);
+        results.push(result);
       }
-      const batchIds = results.map((r) => r.batch_id)
-      resetAndClose()
-      navigate(`/upload-preview?batch_id=${batchIds.join(',')}`)
+      const batchIds = results.map((r) => r.batch_id);
+      resetAndClose();
+      navigate(`/upload-preview?batch_id=${batchIds.join(",")}`);
     } catch (err) {
-      setError(err.message)
-      setUploading(false)
+      setError(err.message);
+      setUploading(false);
     }
   }
 
@@ -78,22 +90,33 @@ export default function UploadModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display font-bold text-lg text-ink-900">Upload Charges</h2>
-          <button onClick={resetAndClose} className="p-1.5 rounded-md text-ink-500 hover:bg-black/5">
+          <h2 className="font-display font-bold text-lg text-ink-900">
+            Upload Charges
+          </h2>
+          <button
+            onClick={resetAndClose}
+            className="p-1.5 rounded-md text-ink-500 hover:bg-black/5"
+          >
             <X size={16} />
           </button>
         </div>
         <p className="text-sm text-ink-500 mb-4">
-          Add one or more CSV exports and tell us which account each one is from — a credit card
-          statement and a checking account export can be uploaded together and reviewed in one pass.
+          Add one or more CSV exports and tell us which account each one is from
+          — a credit card statement and a checking account export can be
+          uploaded together and reviewed in one pass.
         </p>
 
         <div className="space-y-2.5 max-h-[45vh] overflow-y-auto pr-1">
           {rows.map((row) => (
-            <div key={row.id} className="flex items-center gap-2 border border-line rounded-lg p-2.5">
+            <div
+              key={row.id}
+              className="flex items-center gap-2 border border-line rounded-lg p-2.5"
+            >
               <label className="flex-1 min-w-0 flex items-center gap-2 text-sm text-ink-700 cursor-pointer">
                 <FileText size={15} className="text-ink-300 shrink-0" />
-                <span className="truncate">{row.file ? row.file.name : 'Choose CSV file…'}</span>
+                <span className="truncate">
+                  {row.file ? row.file.name : "Choose CSV file…"}
+                </span>
                 <input
                   type="file"
                   accept=".csv"
@@ -103,7 +126,9 @@ export default function UploadModal({ isOpen, onClose }) {
               </label>
               <select
                 value={row.accountType}
-                onChange={(e) => updateRow(row.id, { accountType: e.target.value })}
+                onChange={(e) =>
+                  updateRow(row.id, { accountType: e.target.value })
+                }
                 className="text-sm rounded-md border border-line px-2 py-1.5 shrink-0"
               >
                 {ACCOUNT_TYPES.map((t) => (
@@ -124,7 +149,10 @@ export default function UploadModal({ isOpen, onClose }) {
           ))}
         </div>
 
-        <button onClick={addRow} className="flex items-center gap-1.5 text-sm font-semibold text-accent mt-3">
+        <button
+          onClick={addRow}
+          className="flex items-center gap-1.5 text-sm font-semibold text-accent mt-3"
+        >
           <Plus size={14} /> Add another file
         </button>
 
@@ -147,11 +175,15 @@ export default function UploadModal({ isOpen, onClose }) {
             disabled={uploading}
             className="flex items-center gap-1.5 bg-accent hover:bg-accent-dark disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
           >
-            {uploading ? <Loader2 size={15} className="animate-spin" /> : <UploadCloud size={15} />}
-            {uploading ? 'Uploading…' : 'Upload'}
+            {uploading ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <UploadCloud size={15} />
+            )}
+            {uploading ? "Uploading…" : "Upload"}
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

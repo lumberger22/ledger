@@ -1,9 +1,9 @@
 const OPTIONS = [
-  { value: '30d', label: '30 Days' },
-  { value: 'this_month', label: 'This Month' },
-  { value: 'last_month', label: 'Last Month' },
-  { value: 'ytd', label: 'YTD' },
-]
+  { value: "30d", label: "30 Days" },
+  { value: "this_month", label: "This Month" },
+  { value: "last_month", label: "Last Month" },
+  { value: "ytd", label: "YTD" },
+];
 
 export default function PeriodFilter({ value, onChange, options = OPTIONS }) {
   return (
@@ -14,13 +14,13 @@ export default function PeriodFilter({ value, onChange, options = OPTIONS }) {
           onClick={() => onChange(opt.value)}
           className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
             value === opt.value
-              ? 'bg-white text-ink-900 shadow-sm'
-              : 'text-ink-500 hover:text-ink-900'
+              ? "bg-white text-ink-900 shadow-sm"
+              : "text-ink-500 hover:text-ink-900"
           }`}
         >
           {opt.label}
         </button>
       ))}
     </div>
-  )
+  );
 }

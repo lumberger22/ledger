@@ -1,37 +1,49 @@
-import { useEffect, useState, useCallback } from 'react'
-import { Plus, Search, X } from 'lucide-react'
-import { listCharges, updateCharge, deleteCharge, createCharge } from '../api/charges'
-import { getBudget } from '../api/budget'
-import ChargeTable from '../components/ChargeTable'
-import EmptyState from '../components/EmptyState'
-import { Receipt } from 'lucide-react'
+import { useEffect, useState, useCallback } from "react";
+import { Plus, Search, X } from "lucide-react";
+import {
+  listCharges,
+  updateCharge,
+  deleteCharge,
+  createCharge,
+} from "../api/charges";
+import { getBudget } from "../api/budget";
+import ChargeTable from "../components/ChargeTable";
+import EmptyState from "../components/EmptyState";
+import { Receipt } from "lucide-react";
 
-const emptyForm = { date: new Date().toISOString().slice(0, 10), amount: '', source: '', category_id: '', recurring: false, nickname: '' }
+const emptyForm = {
+  date: new Date().toISOString().slice(0, 10),
+  amount: "",
+  source: "",
+  category_id: "",
+  recurring: false,
+  nickname: "",
+};
 
 export default function Charges() {
-  const [charges, setCharges] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [totalAmount, setTotalAmount] = useState(0)
+  const [charges, setCharges] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalAmount, setTotalAmount] = useState(0);
 
-  const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState([])
-  const [recurringOnly, setRecurringOnly] = useState(false)
-  const [start, setStart] = useState('')
-  const [end, setEnd] = useState('')
-  const [sort, setSort] = useState('date')
-  const [direction, setDirection] = useState('desc')
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState([]);
+  const [recurringOnly, setRecurringOnly] = useState(false);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [sort, setSort] = useState("date");
+  const [direction, setDirection] = useState("desc");
 
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [form, setForm] = useState(emptyForm)
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [form, setForm] = useState(emptyForm);
 
   const load = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       const [chargesRes, budgetRes] = await Promise.all([
         listCharges({
           search: search || undefined,
-          category_id: categoryFilter.join(',') || undefined,
+          category_id: categoryFilter.join(",") || undefined,
           recurring_only: recurringOnly || undefined,
           start: start || undefined,
           end: end || undefined,
@@ -39,65 +51,73 @@ export default function Charges() {
           direction,
         }),
         getBudget(),
-      ])
-      setCharges(chargesRes.items)
-      setTotalAmount(chargesRes.total_amount)
-      setCategories(budgetRes.categories.filter((c) => !c.archived))
+      ]);
+      setCharges(chargesRes.items);
+      setTotalAmount(chargesRes.total_amount);
+      setCategories(budgetRes.categories.filter((c) => !c.archived));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [search, categoryFilter, recurringOnly, start, end, sort, direction])
+  }, [search, categoryFilter, recurringOnly, start, end, sort, direction]);
 
   useEffect(() => {
-    load()
-  }, [load])
+    load();
+  }, [load]);
 
   function handleSortChange(field) {
     if (sort === field) {
-      setDirection(direction === 'asc' ? 'desc' : 'asc')
+      setDirection(direction === "asc" ? "desc" : "asc");
     } else {
-      setSort(field)
-      setDirection('desc')
+      setSort(field);
+      setDirection("desc");
     }
   }
 
   async function handleUpdate(id, data) {
-    await updateCharge(id, data)
-    load()
+    await updateCharge(id, data);
+    load();
   }
 
   async function handleDelete(id) {
-    if (!confirm('Delete this charge?')) return
-    await deleteCharge(id)
-    load()
+    if (!confirm("Delete this charge?")) return;
+    await deleteCharge(id);
+    load();
   }
 
   async function handleAddSubmit(e) {
-    e.preventDefault()
+    e.preventDefault();
     await createCharge({
       ...form,
       amount: parseFloat(form.amount),
       category_id: form.category_id || null,
-      status: 'confirmed',
-    })
-    setForm(emptyForm)
-    setShowAddForm(false)
-    load()
+      status: "confirmed",
+    });
+    setForm(emptyForm);
+    setShowAddForm(false);
+    load();
   }
 
   function toggleCategoryFilter(id) {
-    setCategoryFilter((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
+    setCategoryFilter((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
+    );
   }
 
-  const hasFilters = search || categoryFilter.length || recurringOnly || start || end
+  const hasFilters =
+    search || categoryFilter.length || recurringOnly || start || end;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink-900">Charges</h1>
+          <h1 className="font-display font-bold text-2xl text-ink-900">
+            Charges
+          </h1>
           <p className="text-sm text-ink-500 mt-0.5 tabular">
-            {charges.length} charges · ${Math.abs(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {charges.length} charges · $
+            {Math.abs(totalAmount).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })}
           </p>
         </div>
         <button
@@ -109,7 +129,10 @@ export default function Charges() {
       </div>
 
       {showAddForm && (
-        <form onSubmit={handleAddSubmit} className="bg-surface border border-line rounded-xl2 shadow-card p-5 grid grid-cols-2 md:grid-cols-6 gap-3">
+        <form
+          onSubmit={handleAddSubmit}
+          className="bg-surface border border-line rounded-xl2 shadow-card p-5 grid grid-cols-2 md:grid-cols-6 gap-3"
+        >
           <input
             type="date"
             required
@@ -156,7 +179,9 @@ export default function Charges() {
               <input
                 type="checkbox"
                 checked={form.recurring}
-                onChange={(e) => setForm({ ...form, recurring: e.target.checked })}
+                onChange={(e) =>
+                  setForm({ ...form, recurring: e.target.checked })
+                }
               />
               Recurring
             </label>
@@ -168,7 +193,10 @@ export default function Charges() {
               >
                 Cancel
               </button>
-              <button type="submit" className="text-sm font-semibold text-white bg-accent hover:bg-accent-dark px-3.5 py-1.5 rounded-lg">
+              <button
+                type="submit"
+                className="text-sm font-semibold text-white bg-accent hover:bg-accent-dark px-3.5 py-1.5 rounded-lg"
+              >
                 Save Charge
               </button>
             </div>
@@ -178,7 +206,10 @@ export default function Charges() {
 
       <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 flex flex-wrap items-center gap-2.5">
         <div className="relative">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-300" />
+          <Search
+            size={14}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-300"
+          />
           <input
             placeholder="Search source or nickname…"
             value={search}
@@ -186,9 +217,19 @@ export default function Charges() {
             className="text-sm rounded-lg border border-line pl-8 pr-3 py-1.5 w-56"
           />
         </div>
-        <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="text-sm rounded-lg border border-line px-2.5 py-1.5" />
+        <input
+          type="date"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+          className="text-sm rounded-lg border border-line px-2.5 py-1.5"
+        />
         <span className="text-ink-300 text-sm">–</span>
-        <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className="text-sm rounded-lg border border-line px-2.5 py-1.5" />
+        <input
+          type="date"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+          className="text-sm rounded-lg border border-line px-2.5 py-1.5"
+        />
 
         <div className="flex items-center gap-1 flex-wrap">
           {categories.map((c) => (
@@ -196,9 +237,15 @@ export default function Charges() {
               key={c.id}
               onClick={() => toggleCategoryFilter(c.id)}
               className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
-                categoryFilter.includes(c.id) ? 'text-white border-transparent' : 'text-ink-500 border-line hover:border-ink-300'
+                categoryFilter.includes(c.id)
+                  ? "text-white border-transparent"
+                  : "text-ink-500 border-line hover:border-ink-300"
               }`}
-              style={categoryFilter.includes(c.id) ? { backgroundColor: c.color } : {}}
+              style={
+                categoryFilter.includes(c.id)
+                  ? { backgroundColor: c.color }
+                  : {}
+              }
             >
               {c.name}
             </button>
@@ -206,18 +253,22 @@ export default function Charges() {
         </div>
 
         <label className="flex items-center gap-1.5 text-sm text-ink-700 ml-auto">
-          <input type="checkbox" checked={recurringOnly} onChange={(e) => setRecurringOnly(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={recurringOnly}
+            onChange={(e) => setRecurringOnly(e.target.checked)}
+          />
           Recurring only
         </label>
 
         {hasFilters && (
           <button
             onClick={() => {
-              setSearch('')
-              setCategoryFilter([])
-              setRecurringOnly(false)
-              setStart('')
-              setEnd('')
+              setSearch("");
+              setCategoryFilter([]);
+              setRecurringOnly(false);
+              setStart("");
+              setEnd("");
             }}
             className="flex items-center gap-1 text-xs font-medium text-ink-500 hover:text-ink-900"
           >
@@ -230,7 +281,11 @@ export default function Charges() {
         {loading && !charges.length ? (
           <p className="text-sm text-ink-500 py-8 text-center">Loading…</p>
         ) : charges.length === 0 && !hasFilters ? (
-          <EmptyState icon={Receipt} title="No charges yet" message="Upload a CSV export or add a charge manually to get started." />
+          <EmptyState
+            icon={Receipt}
+            title="No charges yet"
+            message="Upload a CSV export or add a charge manually to get started."
+          />
         ) : (
           <ChargeTable
             charges={charges}
@@ -244,5 +299,5 @@ export default function Charges() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,29 +1,33 @@
-import { useState } from 'react'
-import { Lock } from 'lucide-react'
-import { api, setStoredApiKey } from '../api/client'
+import { useState } from "react";
+import { Lock } from "lucide-react";
+import { api, setStoredApiKey } from "../api/client";
 
 export default function Login({ onSuccess }) {
-  const [apiKey, setApiKey] = useState('')
-  const [error, setError] = useState('')
-  const [checking, setChecking] = useState(false)
+  const [apiKey, setApiKey] = useState("");
+  const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setChecking(true)
+    e.preventDefault();
+    setError("");
+    setChecking(true);
 
-    setStoredApiKey(apiKey.trim())
+    setStoredApiKey(apiKey.trim());
 
     try {
-      await api.get('/api/health')
+      await api.get("/api/health");
       // Health is public; verify the key against a protected route.
-      await api.get('/api/settings')
-      onSuccess()
+      await api.get("/api/settings");
+      onSuccess();
     } catch (err) {
-      setStoredApiKey('')
-      setError(err.status === 401 ? 'Invalid API key.' : err.message || 'Could not connect.')
+      setStoredApiKey("");
+      setError(
+        err.status === 401
+          ? "Invalid API key."
+          : err.message || "Could not connect.",
+      );
     } finally {
-      setChecking(false)
+      setChecking(false);
     }
   }
 
@@ -34,14 +38,18 @@ export default function Login({ onSuccess }) {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent-light text-accent">
             <Lock size={22} />
           </div>
-          <h1 className="font-display font-bold text-xl text-ink-900">Budget App</h1>
-          <p className="text-sm text-ink-500">Enter your API key to continue.</p>
+          <h1 className="font-display font-bold text-xl text-ink-900">
+            Ledger App
+          </h1>
+          <p className="text-sm text-ink-500">
+            Enter your password to continue.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-ink-500 uppercase tracking-wide mb-1.5">
-              API Key
+              Password
             </label>
             <input
               type="password"
@@ -61,10 +69,10 @@ export default function Login({ onSuccess }) {
             disabled={checking || !apiKey.trim()}
             className="w-full bg-accent hover:bg-accent-dark disabled:opacity-60 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
           >
-            {checking ? 'Checking…' : 'Unlock'}
+            {checking ? "Checking…" : "Unlock"}
           </button>
         </form>
       </div>
     </div>
-  )
+  );
 }

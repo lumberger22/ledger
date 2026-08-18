@@ -1,13 +1,13 @@
-import { Inbox } from 'lucide-react'
-import { useUploadModal } from '../context/UploadModalContext'
+import { Inbox } from "lucide-react";
+import { useUploadModal } from "../context/UploadModalContext";
 
 export default function EmptyState({
   icon: Icon = Inbox,
-  title = 'No data yet',
-  message = 'Upload a CSV to get started.',
+  title = "No data yet",
+  message = "Upload a CSV to get started.",
   showUpload = true,
 }) {
-  const { open } = useUploadModal()
+  const { open } = useUploadModal();
 
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-6">
@@ -25,5 +25,5 @@ export default function EmptyState({
         </button>
       )}
     </div>
-  )
+  );
 }
