@@ -34,7 +34,11 @@ def update_budget(update: BudgetUpdate):
     for c in new_categories:
         if not c.get("created_at"):
             prev = current_by_id.get(c["id"])
-            c["created_at"] = prev.get("created_at") if prev else datetime.now(timezone.utc).isoformat()
+            c["created_at"] = (
+                prev.get("created_at")
+                if prev
+                else datetime.now(timezone.utc).isoformat()
+            )
 
     data = {
         "categories": new_categories,
@@ -46,7 +50,9 @@ def update_budget(update: BudgetUpdate):
 
 
 @router.get("/status")
-def budget_status(period: str = Query("this_month"), start: str = Query(None), end: str = Query(None)):
+def budget_status(
+    period: str = Query("this_month"), start: str = Query(None), end: str = Query(None)
+):
     """
     Spend vs. target per category for a period. There is only one budget
     (one set of categories/targets) - the period only controls which
@@ -83,15 +89,17 @@ def budget_status(period: str = Query("this_month"), start: str = Query(None), e
             status = "over"
         elif target and pct >= 85:
             status = "behind"
-        results.append({
-            "id": cat["id"],
-            "name": cat["name"],
-            "color": cat.get("color"),
-            "monthly_target": target,
-            "spent": round(spent, 2),
-            "percent": round(pct, 1),
-            "status": status,
-        })
+        results.append(
+            {
+                "id": cat["id"],
+                "name": cat["name"],
+                "color": cat.get("color"),
+                "monthly_target": target,
+                "spent": round(spent, 2),
+                "percent": round(pct, 1),
+                "status": status,
+            }
+        )
 
     uncategorized = spend.get("uncategorized", 0.0)
 
@@ -103,4 +111,3 @@ def budget_status(period: str = Query("this_month"), start: str = Query(None), e
         "total_target": round(total_target, 2),
         "income": budget.get("income"),
     }
-

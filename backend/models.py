@@ -1,9 +1,10 @@
 """Pydantic request/response models."""
+
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
-
 # ---------- Charges ----------
+
 
 class ChargeUpdate(BaseModel):
     date: Optional[str] = None
@@ -46,6 +47,7 @@ class ChargeOut(BaseModel):
 
 # ---------- Budget ----------
 
+
 class Category(BaseModel):
     id: str
     name: str
@@ -73,6 +75,7 @@ class BudgetUpdate(BaseModel):
 
 # ---------- Settings ----------
 
+
 class CsvColumnMapping(BaseModel):
     date: str = "DATE"
     amount: str = "AMOUNT"
@@ -85,12 +88,15 @@ class Settings(BaseModel):
     date_format: str = "MM/DD/YYYY"
     csv_column_mapping: CsvColumnMapping = Field(default_factory=CsvColumnMapping)
     checking_csv_column_mapping: CsvColumnMapping = Field(
-        default_factory=lambda: CsvColumnMapping(date="Date", amount="Amount", description="Description")
+        default_factory=lambda: CsvColumnMapping(
+            date="Date", amount="Amount", description="Description"
+        )
     )
     theme: str = "light"
 
 
 # ---------- Pending workflow ----------
+
 
 class PendingUpdate(BaseModel):
     category_id: Optional[str] = None

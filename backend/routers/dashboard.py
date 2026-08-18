@@ -13,17 +13,26 @@ DEFAULT_BUDGET = {"categories": [], "history": [], "income": None}
 
 
 @router.get("")
-def get_dashboard(period: str = Query("this_month"), start: str = Query(None), end: str = Query(None)):
+def get_dashboard(
+    period: str = Query("this_month"), start: str = Query(None), end: str = Query(None)
+):
     start_d, end_d = analytics.resolve_period(period, start, end)
     budget = read_json(BUDGET_PATH, DEFAULT_BUDGET)
-    names = {c["id"]: {"name": c["name"], "color": c.get("color")} for c in budget.get("categories", [])}
+    names = {
+        c["id"]: {"name": c["name"], "color": c.get("color")}
+        for c in budget.get("categories", [])
+    }
 
     conn = get_connection()
     try:
         by_category = analytics.spend_by_category(conn, start_d, end_d)
         active_categories = budget.get("categories", [])
 
-        total_target = sum(c.get("monthly_target", 0) for c in active_categories if not c.get("archived"))
+        total_target = sum(
+            c.get("monthly_target", 0)
+            for c in active_categories
+            if not c.get("archived")
+        )
         total_spent = sum(by_category.values())
 
         status = "on_track"
@@ -34,8 +43,21 @@ def get_dashboard(period: str = Query("this_month"), start: str = Query(None), e
 
         breakdown = []
         for cat_id, amount in by_category.items():
-            meta = names.get(cat_id, {"name": "Uncategorized" if cat_id == "uncategorized" else cat_id, "color": "#9CA3AF"})
-            breakdown.append({"category_id": cat_id, "name": meta["name"], "color": meta["color"], "amount": amount})
+            meta = names.get(
+                cat_id,
+                {
+                    "name": "Uncategorized" if cat_id == "uncategorized" else cat_id,
+                    "color": "#9CA3AF",
+                },
+            )
+            breakdown.append(
+                {
+                    "category_id": cat_id,
+                    "name": meta["name"],
+                    "color": meta["color"],
+                    "amount": amount,
+                }
+            )
         breakdown.sort(key=lambda x: x["amount"], reverse=True)
         top_categories = breakdown[:8]
 
@@ -48,9 +70,12 @@ def get_dashboard(period: str = Query("this_month"), start: str = Query(None), e
             d["recurring"] = bool(d["recurring"])
             recent_charges.append(d)
 
-        has_any_confirmed = conn.execute(
-            "SELECT COUNT(*) as c FROM charges WHERE status = 'confirmed'"
-        ).fetchone()["c"] > 0
+        has_any_confirmed = (
+            conn.execute(
+                "SELECT COUNT(*) as c FROM charges WHERE status = 'confirmed'"
+            ).fetchone()["c"]
+            > 0
+        )
     finally:
         conn.close()
 

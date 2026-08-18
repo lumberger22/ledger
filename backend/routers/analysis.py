@@ -13,11 +13,16 @@ DEFAULT_BUDGET = {"categories": [], "history": [], "income": None}
 
 
 def _category_name_map(budget: dict) -> dict:
-    return {c["id"]: {"name": c["name"], "color": c.get("color")} for c in budget.get("categories", [])}
+    return {
+        c["id"]: {"name": c["name"], "color": c.get("color")}
+        for c in budget.get("categories", [])
+    }
 
 
 @router.get("")
-def get_analysis(period: str = Query("this_month"), start: str = Query(None), end: str = Query(None)):
+def get_analysis(
+    period: str = Query("this_month"), start: str = Query(None), end: str = Query(None)
+):
     start_d, end_d = analytics.resolve_period(period, start, end)
     budget = read_json(BUDGET_PATH, DEFAULT_BUDGET)
     names = _category_name_map(budget)
@@ -37,23 +42,41 @@ def get_analysis(period: str = Query("this_month"), start: str = Query(None), en
         last_month_start, last_month_end = analytics.resolve_period("last_month")
         three_month_start, three_month_end = analytics.resolve_period("3month_avg")
 
-        this_month_total = sum(analytics.spend_by_category(conn, this_month_start, this_month_end).values())
-        last_month_total = sum(analytics.spend_by_category(conn, last_month_start, last_month_end).values())
-        three_month_total = sum(analytics.spend_by_category(conn, three_month_start, three_month_end).values())
+        this_month_total = sum(
+            analytics.spend_by_category(conn, this_month_start, this_month_end).values()
+        )
+        last_month_total = sum(
+            analytics.spend_by_category(conn, last_month_start, last_month_end).values()
+        )
+        three_month_total = sum(
+            analytics.spend_by_category(
+                conn, three_month_start, three_month_end
+            ).values()
+        )
 
         # Per-category month-over-month comparison.
-        previous_by_category = analytics.spend_by_category(conn, last_month_start, last_month_end)
+        previous_by_category = analytics.spend_by_category(
+            conn, last_month_start, last_month_end
+        )
         category_breakdown = []
         for cat_id, amount in by_category.items():
-            meta = names.get(cat_id, {"name": "Uncategorized" if cat_id == "uncategorized" else cat_id, "color": "#9CA3AF"})
-            category_breakdown.append({
-                "category_id": cat_id,
-                "name": meta["name"],
-                "color": meta["color"],
-                "total": amount,
-                "amount": amount,
-                "previous_total": previous_by_category.get(cat_id),
-            })
+            meta = names.get(
+                cat_id,
+                {
+                    "name": "Uncategorized" if cat_id == "uncategorized" else cat_id,
+                    "color": "#9CA3AF",
+                },
+            )
+            category_breakdown.append(
+                {
+                    "category_id": cat_id,
+                    "name": meta["name"],
+                    "color": meta["color"],
+                    "total": amount,
+                    "amount": amount,
+                    "previous_total": previous_by_category.get(cat_id),
+                }
+            )
         category_breakdown.sort(key=lambda x: x["total"], reverse=True)
 
         budget_variance_history = analytics.category_budget_variance_history(

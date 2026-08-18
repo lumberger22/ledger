@@ -10,12 +10,18 @@ router = APIRouter(prefix="/api/upload", tags=["upload"])
 
 SETTINGS_PATH = DATA_DIR / "settings.json"
 DEFAULT_CC_MAPPING = {"date": "DATE", "amount": "AMOUNT", "description": "DESCRIPTION"}
-DEFAULT_CHECKING_MAPPING = {"date": "Date", "amount": "Amount", "description": "Description"}
+DEFAULT_CHECKING_MAPPING = {
+    "date": "Date",
+    "amount": "Amount",
+    "description": "Description",
+}
 ACCOUNT_TYPES = {"credit_card", "checking"}
 
 
 @router.post("")
-async def upload_csv(file: UploadFile = File(...), account_type: str = Form("credit_card")):
+async def upload_csv(
+    file: UploadFile = File(...), account_type: str = Form("credit_card")
+):
     """
     Upload + parse a single CSV -> pending rows. `account_type` determines
     which column mapping from settings.json is used ("credit_card" or
@@ -27,12 +33,18 @@ async def upload_csv(file: UploadFile = File(...), account_type: str = Form("cre
     when reviewing/confirming.
     """
     if account_type not in ACCOUNT_TYPES:
-        raise HTTPException(status_code=400, detail=f"account_type must be one of {sorted(ACCOUNT_TYPES)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"account_type must be one of {sorted(ACCOUNT_TYPES)}",
+        )
 
-    settings = read_json(SETTINGS_PATH, {
-        "csv_column_mapping": DEFAULT_CC_MAPPING,
-        "checking_csv_column_mapping": DEFAULT_CHECKING_MAPPING,
-    })
+    settings = read_json(
+        SETTINGS_PATH,
+        {
+            "csv_column_mapping": DEFAULT_CC_MAPPING,
+            "checking_csv_column_mapping": DEFAULT_CHECKING_MAPPING,
+        },
+    )
     if account_type == "checking":
         mapping = settings.get("checking_csv_column_mapping", DEFAULT_CHECKING_MAPPING)
     else:
@@ -69,10 +81,19 @@ async def upload_csv(file: UploadFile = File(...), account_type: str = Form("cre
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    row["date"], row["amount"], row["source"], row["nickname"],
-                    row["category_id"], row["recurring"], row["notes"], row["status"],
-                    row["upload_batch_id"], row["source_file"], row["account_type"],
-                    row["created_at"], row["updated_at"],
+                    row["date"],
+                    row["amount"],
+                    row["source"],
+                    row["nickname"],
+                    row["category_id"],
+                    row["recurring"],
+                    row["notes"],
+                    row["status"],
+                    row["upload_batch_id"],
+                    row["source_file"],
+                    row["account_type"],
+                    row["created_at"],
+                    row["updated_at"],
                 ),
             )
         conn.commit()

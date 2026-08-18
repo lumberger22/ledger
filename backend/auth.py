@@ -3,6 +3,7 @@ Optional API-key auth for remote deployments.
 
 When API_KEY is not set (local dev), all requests pass through unchanged.
 """
+
 from fastapi import HTTPException, Request, status
 
 from config import API_KEY

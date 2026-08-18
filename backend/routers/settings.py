@@ -61,7 +61,12 @@ def download_backup():
     return StreamingResponse(buffer, media_type="application/zip", headers=headers)
 
 
-ALLOWED_BACKUP_FILES = {"charges.db", "settings.json", "budget.json", "analysis_cache.json"}
+ALLOWED_BACKUP_FILES = {
+    "charges.db",
+    "settings.json",
+    "budget.json",
+    "analysis_cache.json",
+}
 
 
 @router.post("/restore")
@@ -96,7 +101,10 @@ async def restore_backup(file: UploadFile = File(...)):
 def reset_all_data(confirm: bool = False):
     """Danger zone: wipe all charges and reset budget/settings to defaults."""
     if not confirm:
-        return {"reset": False, "message": "Pass confirm=true to actually reset all data."}
+        return {
+            "reset": False,
+            "message": "Pass confirm=true to actually reset all data.",
+        }
 
     conn = get_connection()
     try:
@@ -105,7 +113,9 @@ def reset_all_data(confirm: bool = False):
     finally:
         conn.close()
 
-    write_json(DATA_DIR / "budget.json", {"categories": [], "history": [], "income": None})
+    write_json(
+        DATA_DIR / "budget.json", {"categories": [], "history": [], "income": None}
+    )
     write_json(SETTINGS_PATH, DEFAULT_SETTINGS)
 
     init_db()

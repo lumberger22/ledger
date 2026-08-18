@@ -12,6 +12,7 @@ Handles:
 - Sign convention: negative amount = spend/withdrawal, which is what we
   keep; positive = money in, which we drop during parsing.
 """
+
 import io
 import uuid
 from datetime import datetime, timezone
@@ -24,7 +25,9 @@ class CsvParseError(Exception):
     pass
 
 
-def parse_csv(file_bytes: bytes, column_mapping: Dict[str, str]) -> Tuple[List[dict], str, List[str], int]:
+def parse_csv(
+    file_bytes: bytes, column_mapping: Dict[str, str]
+) -> Tuple[List[dict], str, List[str], int]:
     """
     Parse CSV bytes into a list of row dicts ready for insertion.
 
@@ -68,7 +71,9 @@ def parse_csv(file_bytes: bytes, column_mapping: Dict[str, str]) -> Tuple[List[d
 
         parsed_date = _normalize_date(raw_date)
         if parsed_date is None:
-            warnings.append(f"Row {idx + 2}: could not parse date '{raw_date}', skipped.")
+            warnings.append(
+                f"Row {idx + 2}: could not parse date '{raw_date}', skipped."
+            )
             continue
 
         parsed_amount = _normalize_amount(raw_amount)
@@ -89,20 +94,22 @@ def parse_csv(file_bytes: bytes, column_mapping: Dict[str, str]) -> Tuple[List[d
 
         source = raw_desc if raw_desc else "(no description)"
 
-        rows.append({
-            "date": parsed_date,
-            "amount": parsed_amount,
-            "source": source,
-            "nickname": None,
-            "category_id": None,
-            "recurring": 0,
-            "notes": None,
-            "status": "pending",
-            "upload_batch_id": batch_id,
-            "source_file": None,
-            "created_at": now,
-            "updated_at": now,
-        })
+        rows.append(
+            {
+                "date": parsed_date,
+                "amount": parsed_amount,
+                "source": source,
+                "nickname": None,
+                "category_id": None,
+                "recurring": 0,
+                "notes": None,
+                "status": "pending",
+                "upload_batch_id": batch_id,
+                "source_file": None,
+                "created_at": now,
+                "updated_at": now,
+            }
+        )
 
     if not rows:
         if skipped_positive:

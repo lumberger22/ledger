@@ -8,7 +8,10 @@
     "dev:backend": "cd ../backend && ../backend/.venv/Scripts/uvicorn.exe main:app --reload --port 8000",
     "setup:backend": "cd backend && python -m pip install -r requirements.txt",
     "setup:frontend": "cd frontend && npm install",
-    "setup": "npm run setup:backend && npm run setup:frontend"
+    "setup": "npm run setup:backend && npm run setup:frontend",
+    "format:frontend": "prettier --write frontend/src",
+    "format:backend": "black backend",
+    "format": "npm run format:frontend && npm run format:backend"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",

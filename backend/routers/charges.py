@@ -20,7 +20,9 @@ def _row_to_dict(row):
 def list_charges(
     start: Optional[str] = None,
     end: Optional[str] = None,
-    category_id: Optional[str] = Query(None, description="Comma-separated list for multi-select"),
+    category_id: Optional[str] = Query(
+        None, description="Comma-separated list for multi-select"
+    ),
     recurring_only: bool = False,
     search: Optional[str] = None,
     sort: str = Query("date"),
@@ -81,13 +83,22 @@ def create_charge(charge: ChargeCreate):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 'manual', ?, ?)
             """,
             (
-                charge.date, charge.amount, charge.source, charge.nickname,
-                charge.category_id, 1 if charge.recurring else 0, charge.notes,
-                charge.status, now, now,
+                charge.date,
+                charge.amount,
+                charge.source,
+                charge.nickname,
+                charge.category_id,
+                1 if charge.recurring else 0,
+                charge.notes,
+                charge.status,
+                now,
+                now,
             ),
         )
         conn.commit()
-        row = conn.execute("SELECT * FROM charges WHERE id = ?", (cur.lastrowid,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM charges WHERE id = ?", (cur.lastrowid,)
+        ).fetchone()
         return _row_to_dict(row)
     finally:
         conn.close()
@@ -97,13 +108,17 @@ def create_charge(charge: ChargeCreate):
 def update_charge(charge_id: int, update: ChargeUpdate):
     conn = get_connection()
     try:
-        existing = conn.execute("SELECT id FROM charges WHERE id = ?", (charge_id,)).fetchone()
+        existing = conn.execute(
+            "SELECT id FROM charges WHERE id = ?", (charge_id,)
+        ).fetchone()
         if not existing:
             raise HTTPException(status_code=404, detail="Charge not found")
 
         data = update.model_dump(exclude_unset=True)
         if not data:
-            row = conn.execute("SELECT * FROM charges WHERE id = ?", (charge_id,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM charges WHERE id = ?", (charge_id,)
+            ).fetchone()
             return _row_to_dict(row)
 
         fields, values = [], []
@@ -118,7 +133,9 @@ def update_charge(charge_id: int, update: ChargeUpdate):
 
         conn.execute(f"UPDATE charges SET {', '.join(fields)} WHERE id = ?", values)
         conn.commit()
-        row = conn.execute("SELECT * FROM charges WHERE id = ?", (charge_id,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM charges WHERE id = ?", (charge_id,)
+        ).fetchone()
         return _row_to_dict(row)
     finally:
         conn.close()
@@ -128,7 +145,9 @@ def update_charge(charge_id: int, update: ChargeUpdate):
 def delete_charge(charge_id: int):
     conn = get_connection()
     try:
-        existing = conn.execute("SELECT id FROM charges WHERE id = ?", (charge_id,)).fetchone()
+        existing = conn.execute(
+            "SELECT id FROM charges WHERE id = ?", (charge_id,)
+        ).fetchone()
         if not existing:
             raise HTTPException(status_code=404, detail="Charge not found")
         conn.execute("DELETE FROM charges WHERE id = ?", (charge_id,))

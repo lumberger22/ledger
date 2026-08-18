@@ -4,6 +4,7 @@ Safe read/write helpers for the JSON config-like files (settings, budget).
 Writes are atomic (write to temp file, then replace) so a crash mid-write
 never corrupts the JSON on disk.
 """
+
 import json
 import os
 from pathlib import Path

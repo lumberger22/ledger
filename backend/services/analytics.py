@@ -1,13 +1,16 @@
 """
 Shared aggregation/query logic used by budget.py, analysis.py, and dashboard.py.
 """
+
 import calendar
 import sqlite3
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 
-def resolve_period(period: str, start: Optional[str] = None, end: Optional[str] = None) -> Tuple[str, str]:
+def resolve_period(
+    period: str, start: Optional[str] = None, end: Optional[str] = None
+) -> Tuple[str, str]:
     """
     Turn a named period (or explicit range) into an ISO (start, end) date tuple.
 
@@ -61,7 +64,9 @@ def days_in_month(d: date) -> int:
     return calendar.monthrange(d.year, d.month)[1]
 
 
-def spend_by_category(conn: sqlite3.Connection, start: str, end: str) -> Dict[str, float]:
+def spend_by_category(
+    conn: sqlite3.Connection, start: str, end: str
+) -> Dict[str, float]:
     """Return {category_id: total_spend} for confirmed charges (negative amounts = spend)."""
     rows = conn.execute(
         """
@@ -72,10 +77,14 @@ def spend_by_category(conn: sqlite3.Connection, start: str, end: str) -> Dict[st
         """,
         (start, end),
     ).fetchall()
-    return {(r["category_id"] or "uncategorized"): round(r["spend"] or 0, 2) for r in rows}
+    return {
+        (r["category_id"] or "uncategorized"): round(r["spend"] or 0, 2) for r in rows
+    }
 
 
-def spend_by_merchant(conn: sqlite3.Connection, start: str, end: str, limit: int = 15) -> List[dict]:
+def spend_by_merchant(
+    conn: sqlite3.Connection, start: str, end: str, limit: int = 15
+) -> List[dict]:
     rows = conn.execute(
         """
         SELECT source, amount
@@ -120,7 +129,7 @@ def spend_by_month(conn: sqlite3.Connection, months_back: int = 6) -> List[dict]
             y -= 1
     months.reverse()
 
-    for (yy, mm) in months:
+    for yy, mm in months:
         start = date(yy, mm, 1).isoformat()
         end = date(yy, mm, days_in_month(date(yy, mm, 1))).isoformat()
         row = conn.execute(
@@ -131,10 +140,12 @@ def spend_by_month(conn: sqlite3.Connection, months_back: int = 6) -> List[dict]
             """,
             (start, end),
         ).fetchone()
-        results.append({
-            "month": f"{yy:04d}-{mm:02d}",
-            "total": round(row["total"] or 0, 2),
-        })
+        results.append(
+            {
+                "month": f"{yy:04d}-{mm:02d}",
+                "total": round(row["total"] or 0, 2),
+            }
+        )
     return results
 
 
@@ -155,7 +166,9 @@ def recurring_split(conn: sqlite3.Connection, start: str, end: str) -> dict:
     }
 
 
-def pace_projection(conn: sqlite3.Connection, category_spend: Dict[str, float]) -> Dict[str, dict]:
+def pace_projection(
+    conn: sqlite3.Connection, category_spend: Dict[str, float]
+) -> Dict[str, dict]:
     """
     For the current, in-progress month: project full-month spend per category
     based on days elapsed so far.
@@ -180,7 +193,9 @@ def pace_projection(conn: sqlite3.Connection, category_spend: Dict[str, float]) 
     return projections
 
 
-def find_prior_categorizations(conn: sqlite3.Connection, sources: List[str]) -> Dict[str, dict]:
+def find_prior_categorizations(
+    conn: sqlite3.Connection, sources: List[str]
+) -> Dict[str, dict]:
     """
     For each given (raw) source string, find the most recent charge with that
     same source that already has a category assigned, and return its
@@ -214,9 +229,13 @@ def find_prior_categorizations(conn: sqlite3.Connection, sources: List[str]) -> 
             (norm,),
         ).fetchone()
         if row:
-            results[norm] = {"category_id": row["category_id"], "recurring": bool(row["recurring"])}
+            results[norm] = {
+                "category_id": row["category_id"],
+                "recurring": bool(row["recurring"]),
+            }
 
     return results
+
 
 def category_spend_by_month(conn, months_back=6):
     """Return per-category spending totals for trailing calendar months, oldest first."""
@@ -240,10 +259,15 @@ def category_spend_by_month(conn, months_back=6):
                GROUP BY category_id""",
             (start, end),
         ).fetchall()
-        results.append({
-            "month": f"{yy:04d}-{mm:02d}",
-            "categories": {(r["category_id"] or "uncategorized"): round(r["total"] or 0, 2) for r in rows},
-        })
+        results.append(
+            {
+                "month": f"{yy:04d}-{mm:02d}",
+                "categories": {
+                    (r["category_id"] or "uncategorized"): round(r["total"] or 0, 2)
+                    for r in rows
+                },
+            }
+        )
     return results
 
 
@@ -260,7 +284,9 @@ def spend_by_day_of_week(conn, start, end):
     names = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
     for row in rows:
         try:
-            totals[names[date.fromisoformat(row["date"]).weekday()]] += row["total"] or 0
+            totals[names[date.fromisoformat(row["date"]).weekday()]] += (
+                row["total"] or 0
+            )
         except (TypeError, ValueError):
             continue
     return [{"day": day, "total": round(totals[day], 2)} for day in totals]
@@ -275,10 +301,16 @@ def biggest_charges(conn, start, end, limit=20):
            ORDER BY ABS(amount) DESC, date DESC, id DESC LIMIT ?""",
         (start, end, limit),
     ).fetchall()
-    return [{
-        "id": str(r["id"]), "merchant": r["source"], "date": r["date"],
-        "amount": round(-(r["amount"] or 0), 2), "category_id": r["category_id"],
-    } for r in rows]
+    return [
+        {
+            "id": str(r["id"]),
+            "merchant": r["source"],
+            "date": r["date"],
+            "amount": round(-(r["amount"] or 0), 2),
+            "category_id": r["category_id"],
+        }
+        for r in rows
+    ]
 
 
 def category_budget_variance_history(conn, categories, months_back=6):
@@ -294,7 +326,14 @@ def category_budget_variance_history(conn, categories, months_back=6):
     months.reverse()
     budget_by_id, meta_by_id = {}, {}
     for cat in categories:
-        value = next((cat.get(k) for k in ("budget", "monthly_budget", "budget_amount", "limit") if cat.get(k) is not None), None)
+        value = next(
+            (
+                cat.get(k)
+                for k in ("budget", "monthly_budget", "budget_amount", "limit")
+                if cat.get(k) is not None
+            ),
+            None,
+        )
         try:
             value = float(value) if value is not None else None
         except (TypeError, ValueError):
@@ -315,9 +354,17 @@ def category_budget_variance_history(conn, categories, months_back=6):
                 (start, end, cat_id),
             ).fetchone()
             spent = row["total"] or 0
-            status = "over" if spent > budget else "under" if spent < budget else "on_budget"
+            status = (
+                "over" if spent > budget else "under" if spent < budget else "on_budget"
+            )
             statuses.append({"month": f"{yy:04d}-{mm:02d}", "status": status})
         meta = meta_by_id[cat_id]
-        result.append({"category_id": cat_id, "name": meta.get("name", cat_id), "color": meta.get("color"), "months": statuses})
+        result.append(
+            {
+                "category_id": cat_id,
+                "name": meta.get("name", cat_id),
+                "color": meta.get("color"),
+                "months": statuses,
+            }
+        )
     return result
-

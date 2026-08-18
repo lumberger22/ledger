@@ -5,6 +5,7 @@ All *charges* (pending and confirmed) live here. Everything else
 (settings, budget/categories) lives in JSON files handled by
 services/json_store.py.
 """
+
 import sqlite3
 
 from config import DATA_DIR, DB_PATH
@@ -47,7 +48,9 @@ def get_connection() -> sqlite3.Connection:
 
 def _ensure_column(conn: sqlite3.Connection, table: str, column: str, ddl: str) -> None:
     """Add `column` to `table` if it doesn't already exist (lightweight migration)."""
-    existing = [row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+    existing = [
+        row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()
+    ]
     if column not in existing:
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
 

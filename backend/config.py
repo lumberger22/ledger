@@ -4,6 +4,7 @@ Runtime configuration from environment variables.
 Local dev: defaults keep the app working with no env vars set.
 Production (Railway): set DATA_DIR, API_KEY, and optionally ALLOWED_ORIGINS.
 """
+
 import os
 from pathlib import Path
 

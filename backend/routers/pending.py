@@ -19,7 +19,11 @@ def _split_batch_ids(batch_id: str):
 
 
 @router.get("")
-def list_pending(batch_id: str = Query(..., description="Single batch id, or comma-separated list of ids")):
+def list_pending(
+    batch_id: str = Query(
+        ..., description="Single batch id, or comma-separated list of ids"
+    )
+):
     ids = _split_batch_ids(batch_id)
     if not ids:
         raise HTTPException(status_code=400, detail="No batch_id provided")
@@ -42,7 +46,9 @@ def list_pending(batch_id: str = Query(..., description="Single batch id, or com
 def update_pending(charge_id: int, update: PendingUpdate):
     conn = get_connection()
     try:
-        existing = conn.execute("SELECT id FROM charges WHERE id = ? AND status = 'pending'", (charge_id,)).fetchone()
+        existing = conn.execute(
+            "SELECT id FROM charges WHERE id = ? AND status = 'pending'", (charge_id,)
+        ).fetchone()
         if not existing:
             raise HTTPException(status_code=404, detail="Pending charge not found")
 
@@ -59,7 +65,9 @@ def update_pending(charge_id: int, update: PendingUpdate):
 
         conn.execute(f"UPDATE charges SET {', '.join(fields)} WHERE id = ?", values)
         conn.commit()
-        row = conn.execute("SELECT * FROM charges WHERE id = ?", (charge_id,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM charges WHERE id = ?", (charge_id,)
+        ).fetchone()
         return _row_to_dict(row)
     finally:
         conn.close()
@@ -69,7 +77,9 @@ def update_pending(charge_id: int, update: PendingUpdate):
 def delete_pending(charge_id: int):
     conn = get_connection()
     try:
-        existing = conn.execute("SELECT id FROM charges WHERE id = ? AND status = 'pending'", (charge_id,)).fetchone()
+        existing = conn.execute(
+            "SELECT id FROM charges WHERE id = ? AND status = 'pending'", (charge_id,)
+        ).fetchone()
         if not existing:
             raise HTTPException(status_code=404, detail="Pending charge not found")
         conn.execute("DELETE FROM charges WHERE id = ?", (charge_id,))
@@ -80,7 +90,11 @@ def delete_pending(charge_id: int):
 
 
 @router.post("/confirm")
-def confirm_batch(batch_id: str = Query(..., description="Single batch id, or comma-separated list of ids")):
+def confirm_batch(
+    batch_id: str = Query(
+        ..., description="Single batch id, or comma-separated list of ids"
+    )
+):
     ids = _split_batch_ids(batch_id)
     if not ids:
         raise HTTPException(status_code=400, detail="No batch_id provided")
@@ -93,7 +107,9 @@ def confirm_batch(batch_id: str = Query(..., description="Single batch id, or co
             ids,
         ).fetchall()
         if not rows:
-            raise HTTPException(status_code=404, detail="No pending rows found for this batch")
+            raise HTTPException(
+                status_code=404, detail="No pending rows found for this batch"
+            )
 
         missing = [r["id"] for r in rows if not r["category_id"]]
         if missing:
