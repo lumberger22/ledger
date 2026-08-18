@@ -58,7 +58,7 @@ export default function Login({ onSuccess }) {
               autoFocus
               required
               className="w-full text-sm rounded-lg border border-line px-3 py-2"
-              placeholder="Paste the key from Railway"
+              placeholder="Paste the password here"
             />
           </div>
 
