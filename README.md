@@ -12,12 +12,14 @@ Tailwind frontend.
 ## First-time setup
 
 You'll need:
+
 - **Python 3.10+** (check with `python --version` in a terminal)
 - **Node.js 18+** (check with `node --version`)
 
 ### Windows
 
 Double-click **`run.bat`** in this folder. It will:
+
 1. Create a Python virtual environment in `backend\.venv`
 2. Install backend dependencies
 3. Install frontend dependencies (first run only, takes a minute or two)
@@ -59,6 +61,7 @@ time the backend is running — useful for poking at endpoints directly.
 ## Where your data lives
 
 Everything is stored locally in `user_data/`:
+
 - `charges.db` — a SQLite database with every charge you've uploaded or entered
 - `budget.json` — your categories, monthly targets, and target history
 - `settings.json` — currency, date format, and CSV column mapping
