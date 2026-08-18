@@ -1,0 +1,20 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# User data (personal financial data - never commit this)
+user_data/*.db
+user_data/*.json
+user_data/*.bak
+!user_data/.gitkeep
+
+# Editor/OS
+.DS_Store
+.vscode/
+.idea/

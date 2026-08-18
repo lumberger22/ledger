@@ -1,0 +1,16 @@
+{
+  "name": "budget-app",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "vite",
+    "dev:backend": "cd ../backend && ../backend/.venv/Scripts/uvicorn.exe main:app --reload --port 8000",
+    "setup:backend": "cd backend && python -m pip install -r requirements.txt",
+    "setup:frontend": "cd frontend && npm install",
+    "setup": "npm run setup:backend && npm run setup:frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

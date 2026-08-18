@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas text-ink-900 font-body antialiased;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #C9CFC9 transparent;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-ring {
+  @apply outline-none ring-2 ring-offset-2 ring-offset-canvas ring-accent/50;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  @apply focus-ring;
+}
