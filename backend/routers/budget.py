@@ -63,10 +63,7 @@ def budget_status(
     start_d, end_d = analytics.resolve_period(period, start, end)
 
     conn = get_connection()
-    try:
-        spend = analytics.spend_by_category(conn, start_d, end_d)
-    finally:
-        conn.close()
+    spend = analytics.spend_by_category(conn, start_d, end_d)
 
     if period == "3month_avg":
         spend = {k: round(v / 3, 2) for k, v in spend.items()}
@@ -103,11 +100,27 @@ def budget_status(
 
     uncategorized = spend.get("uncategorized", 0.0)
 
+    manual_income = budget.get("income")
+    effective_income = manual_income
+    income_source = "manual" if manual_income is not None else "paystub"
+    if effective_income is None:
+        income_row = conn.execute(
+            "SELECT COALESCE(SUM(net_pay), 0) AS net FROM paystubs WHERE check_date >= ? AND check_date <= ?",
+            (start_d, end_d),
+        ).fetchone()
+        effective_income = round(income_row["net"] or 0, 2)
+        if period == "3month_avg":
+            effective_income = round(effective_income / 3, 2)
+
+    conn.close()
+
     return {
         "period": {"start": start_d, "end": end_d},
         "categories": results,
         "uncategorized_spend": round(uncategorized, 2),
         "total_spent": round(total_spent + uncategorized, 2),
         "total_target": round(total_target, 2),
-        "income": budget.get("income"),
+        "income": effective_income,
+        "manual_income": manual_income,
+        "income_source": income_source,
     }

@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, TrendingUp, Repeat, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  TrendingUp,
+  Repeat,
+  Wallet,
+  CircleDollarSign,
+} from "lucide-react";
 import { getDashboard } from "../api/dashboard";
 import PeriodFilter from "../components/PeriodFilter";
 import CategoryBadge from "../components/CategoryBadge";
@@ -42,13 +48,13 @@ export default function Dashboard() {
     return <div className="text-ink-500 text-sm">Loading…</div>;
   }
 
-  if (data && !data.has_data) {
+  if (data && !data.has_data && !data.has_income) {
     return (
       <div className="bg-surface border border-line rounded-xl2 shadow-card">
         <EmptyState
           icon={Wallet}
           title="No charges yet"
-          message="Upload a credit card CSV export to start tracking your spending against your budget."
+          message="Upload a credit card CSV export or a payslip to start building your Ledger."
         />
       </div>
     );
@@ -73,7 +79,7 @@ export default function Dashboard() {
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Budget summary card */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -120,6 +126,47 @@ export default function Dashboard() {
             className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-dark"
           >
             View Budget <ArrowRight size={14} />
+          </Link>
+        </motion.div>
+
+        {/* Income summary */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.05 }}
+          className="bg-surface border border-line rounded-xl2 shadow-card p-6"
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-1">
+                Income
+              </p>
+              <p className="font-display font-bold text-2xl text-ink-900 tabular">
+                {currency(data.income_summary?.net || 0)}
+              </p>
+              <p className="text-xs text-ink-500 mt-1">take-home this period</p>
+            </div>
+            <CircleDollarSign size={17} className="text-ink-300" />
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-ink-500">Gross</span>
+              <span className="tabular font-medium">
+                {currency(data.income_summary?.gross || 0)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-ink-500">Taxes</span>
+              <span className="tabular font-medium">
+                {currency(data.income_summary?.taxes || 0)}
+              </span>
+            </div>
+          </div>
+          <Link
+            to="/income"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-dark mt-4"
+          >
+            View Income <ArrowRight size={14} />
           </Link>
         </motion.div>
 

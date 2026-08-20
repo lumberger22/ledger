@@ -4,6 +4,7 @@ import {
   Receipt,
   PiggyBank,
   LineChart,
+  CircleDollarSign,
   Settings as SettingsIcon,
   Upload,
   Wallet,
@@ -16,6 +17,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/charges", label: "Charges", icon: Receipt },
   { to: "/budget", label: "Budget", icon: PiggyBank },
+  { to: "/income", label: "Income", icon: CircleDollarSign },
   { to: "/analysis", label: "Analysis", icon: LineChart },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];

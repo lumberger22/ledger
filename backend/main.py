@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from auth import verify_api_key
 from config import ALLOWED_ORIGINS, ENABLE_DOCS, STATIC_DIR
 from db import init_db
-from routers import upload, pending, charges, budget, analysis, dashboard, settings
+from routers import upload, pending, charges, budget, analysis, dashboard, settings, income
 
 app = FastAPI(
     title="Budget App",
@@ -47,6 +47,7 @@ app.include_router(budget.router)
 app.include_router(analysis.router)
 app.include_router(dashboard.router)
 app.include_router(settings.router)
+app.include_router(income.router)
 
 
 @app.get("/api/health")

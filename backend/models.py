@@ -103,3 +103,35 @@ class PendingUpdate(BaseModel):
     nickname: Optional[str] = None
     recurring: Optional[bool] = None
     notes: Optional[str] = None
+
+# ---------- Income / Paystubs ----------
+
+class PaystubLineItem(BaseModel):
+    section: str
+    label: str
+    amount: float
+
+
+class PaystubPayment(BaseModel):
+    bank: str
+    account_label: str
+    account_last4: Optional[str] = None
+    amount: float
+
+
+class PaystubReview(BaseModel):
+    pay_period_start: str
+    pay_period_end: str
+    check_date: str
+    gross_pay: float
+    net_pay: float
+    pretax_total: float
+    posttax_total: float
+    taxes_total: float
+    employer_benefits_total: float
+    line_items: List[PaystubLineItem] = Field(default_factory=list)
+    payments: List[PaystubPayment] = Field(default_factory=list)
+
+
+class PaystubConfirm(BaseModel):
+    paystubs: List[PaystubReview]

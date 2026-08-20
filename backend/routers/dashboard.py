@@ -76,6 +76,10 @@ def get_dashboard(
             ).fetchone()["c"]
             > 0
         )
+        income_row = conn.execute(
+            "SELECT COALESCE(SUM(gross_pay), 0) AS gross, COALESCE(SUM(net_pay), 0) AS net, COALESCE(SUM(taxes_total), 0) AS taxes, COUNT(*) AS count FROM paystubs WHERE check_date >= ? AND check_date <= ?",
+            (start_d, end_d),
+        ).fetchone()
     finally:
         conn.close()
 
@@ -86,6 +90,13 @@ def get_dashboard(
             "total_target": round(total_target, 2),
             "status": status,
         },
+        "income_summary": {
+            "gross": round(income_row["gross"] or 0, 2),
+            "net": round(income_row["net"] or 0, 2),
+            "taxes": round(income_row["taxes"] or 0, 2),
+            "count": income_row["count"],
+        },
+        "has_income": income_row["count"] > 0,
         "top_categories": top_categories,
         "recent_charges": recent_charges,
         "has_data": has_any_confirmed,

@@ -246,11 +246,20 @@ export default function Budget() {
             </span>
           </div>
           <ProgressBar
-            percent={(status.total_target / status.income) * 100}
+            percent={
+              status.income > 0
+                ? (status.total_target / status.income) * 100
+                : 0
+            }
             status="on_track"
             color="#2A6F6A"
             height={8}
           />
+          <p className="text-xs text-ink-500 mt-2">
+            {status.income_source === "paystub"
+              ? "Income is connected to confirmed payslips. Enter a monthly income value while editing Budget to override it."
+              : "Income is using your manual monthly override."}
+          </p>
         </div>
       )}
 

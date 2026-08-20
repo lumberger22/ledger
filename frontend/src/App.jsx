@@ -8,6 +8,7 @@ import UploadPreview from "./pages/UploadPreview";
 import Budget from "./pages/Budget";
 import Analysis from "./pages/Analysis";
 import Settings from "./pages/Settings";
+import Income from "./pages/Income";
 import Login from "./pages/Login";
 import { api, clearStoredApiKey, getStoredApiKey } from "./api/client";
 
@@ -79,6 +80,7 @@ export default function App() {
             <Route path="/budget" element={<Budget />} />
             <Route path="/analysis" element={<Analysis />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/income" element={<Income />} />
           </Routes>
         </main>
       </div>
