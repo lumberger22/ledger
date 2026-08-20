@@ -9,6 +9,9 @@ import Budget from "./pages/Budget";
 import Analysis from "./pages/Analysis";
 import Settings from "./pages/Settings";
 import Income from "./pages/Income";
+import Accounts from "./pages/Accounts";
+import Investments from "./pages/Investments";
+import NetWorth from "./pages/NetWorth";
 import Login from "./pages/Login";
 import { api, clearStoredApiKey, getStoredApiKey } from "./api/client";
 
@@ -75,6 +78,9 @@ export default function App() {
         <main className="max-w-6xl mx-auto px-6 py-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/investments" element={<Investments />} />
+            <Route path="/net-worth" element={<NetWorth />} />
             <Route path="/charges" element={<Charges />} />
             <Route path="/upload-preview" element={<UploadPreview />} />
             <Route path="/budget" element={<Budget />} />

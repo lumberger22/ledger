@@ -1,15 +1,11 @@
 from datetime import datetime
 from fastapi import APIRouter, Query
 
-from config import DATA_DIR
 from db import get_connection
 from services import analytics
-from services.json_store import read_json
+from services import categories_store as cats
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
-
-BUDGET_PATH = DATA_DIR / "budget.json"
-DEFAULT_BUDGET = {"categories": [], "history": [], "income": None}
 
 
 @router.get("")
@@ -17,22 +13,15 @@ def get_dashboard(
     period: str = Query("this_month"), start: str = Query(None), end: str = Query(None)
 ):
     start_d, end_d = analytics.resolve_period(period, start, end)
-    budget = read_json(BUDGET_PATH, DEFAULT_BUDGET)
-    names = {
-        c["id"]: {"name": c["name"], "color": c.get("color")}
-        for c in budget.get("categories", [])
-    }
 
     conn = get_connection()
     try:
-        by_category = analytics.spend_by_category(conn, start_d, end_d)
-        active_categories = budget.get("categories", [])
+        names = cats.category_meta_map(conn)
+        active_categories = cats.list_categories(conn, include_archived=False)
 
-        total_target = sum(
-            c.get("monthly_target", 0)
-            for c in active_categories
-            if not c.get("archived")
-        )
+        by_category = analytics.spend_by_category(conn, start_d, end_d)
+
+        total_target = sum(c.get("monthly_target", 0) for c in active_categories)
         total_spent = sum(by_category.values())
 
         status = "on_track"

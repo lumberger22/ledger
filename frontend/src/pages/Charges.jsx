@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Search, X, Landmark, ChevronRight } from "lucide-react";
 import {
   listCharges,
   updateCharge,
@@ -7,6 +8,7 @@ import {
   createCharge,
 } from "../api/charges";
 import { getBudget } from "../api/budget";
+import { getPlaidPending } from "../api/upload";
 import ChargeTable from "../components/ChargeTable";
 import EmptyState from "../components/EmptyState";
 import { Receipt } from "lucide-react";
@@ -36,6 +38,13 @@ export default function Charges() {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [plaidPendingCount, setPlaidPendingCount] = useState(0);
+
+  useEffect(() => {
+    getPlaidPending()
+      .then((res) => setPlaidPendingCount(res.total))
+      .catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -127,6 +136,27 @@ export default function Charges() {
           <Plus size={15} /> Add Charge
         </button>
       </div>
+
+      {plaidPendingCount > 0 && (
+        <Link
+          to="/upload-preview?source=plaid"
+          className="flex items-center justify-between gap-3 bg-accent-light/50 border border-accent/30 rounded-xl2 p-4 text-sm hover:bg-accent-light transition-colors"
+        >
+          <span className="flex items-center gap-2 text-ink-900">
+            <Landmark size={15} className="text-accent-dark shrink-0" />
+            <span>
+              <strong className="font-semibold">
+                {plaidPendingCount} transaction{plaidPendingCount !== 1 ? "s" : ""}
+              </strong>{" "}
+              from your connected accounts {plaidPendingCount !== 1 ? "need" : "needs"} a
+              category before they'll show up here.
+            </span>
+          </span>
+          <span className="flex items-center gap-1 font-semibold text-accent-dark shrink-0">
+            Review <ChevronRight size={14} />
+          </span>
+        </Link>
+      )}
 
       {showAddForm && (
         <form

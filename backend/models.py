@@ -95,6 +95,57 @@ class Settings(BaseModel):
     theme: str = "light"
 
 
+# ---------- Plaid ----------
+
+
+class LinkTokenRequest(BaseModel):
+    # Set to re-link an existing, broken Item (e.g. login_required) in
+    # Plaid's "update mode" instead of creating a brand-new connection.
+    item_id: Optional[str] = None
+
+
+class ExchangeTokenRequest(BaseModel):
+    public_token: str
+    institution_id: Optional[str] = None
+    institution_name: Optional[str] = None
+
+
+class AccountOut(BaseModel):
+    id: int
+    plaid_account_id: Optional[str] = None
+    name: str
+    official_name: Optional[str] = None
+    mask: Optional[str] = None
+    type: Optional[str] = None
+    subtype: Optional[str] = None
+    current_balance: Optional[float] = None
+    available_balance: Optional[float] = None
+    credit_limit: Optional[float] = None
+    iso_currency_code: Optional[str] = None
+    apr_percentage: Optional[float] = None
+    minimum_payment: Optional[float] = None
+    last_statement_balance: Optional[float] = None
+    is_manual: bool = False
+    is_hidden: bool = False
+    last_balance_sync_at: Optional[str] = None
+    institution_name: Optional[str] = None
+    item_status: Optional[str] = None
+
+
+class ManualAccountCreate(BaseModel):
+    name: str
+    type: str = "depository"
+    subtype: Optional[str] = None
+    current_balance: float = 0.0
+    iso_currency_code: str = "USD"
+
+
+class AccountUpdate(BaseModel):
+    name: Optional[str] = None
+    is_hidden: Optional[bool] = None
+    current_balance: Optional[float] = None
+
+
 # ---------- Pending workflow ----------
 
 

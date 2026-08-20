@@ -96,8 +96,8 @@ export default function Settings() {
             className="w-full text-sm rounded-lg border border-line px-3 py-2"
           />
           <p className="text-xs text-ink-500 mt-1">
-            Where <code className="bg-black/5 px-1 rounded">charges.db</code>,{" "}
-            <code className="bg-black/5 px-1 rounded">budget.json</code>, and{" "}
+            Where <code className="bg-black/5 px-1 rounded">charges.db</code>{" "}
+            (charges, categories, connected accounts) and{" "}
             <code className="bg-black/5 px-1 rounded">settings.json</code> live.
             Changing this here is informational only — the backend currently
             reads from its{" "}
@@ -235,8 +235,10 @@ export default function Settings() {
           Backup & Export
         </p>
         <p className="text-sm text-ink-500">
-          Download the SQLite database and JSON config files as a single zip.
-          Use restore to migrate data from a local install to Railway.
+          Download the SQLite database (charges, categories, connected
+          accounts) and settings as a single zip. Use restore to migrate
+          data from a local install to production, or roll back before a
+          risky change.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <button

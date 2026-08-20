@@ -42,6 +42,37 @@ def list_pending(
     return {"items": items, "total": len(items), "categorized": categorized}
 
 
+@router.get("/plaid")
+def list_pending_plaid():
+    """
+    Every pending charge synced from a connected account, across every
+    Plaid Item, regardless of which sync batch it landed in. Plaid-synced
+    transactions only auto-confirm straight into the budget when the
+    merchant is already recognized (see services/plaid_sync.py) — anything
+    new lands here instead of surfacing anywhere in the UI on its own, so
+    this is the endpoint the "needs review" banner on Accounts/Charges uses
+    to find them without the client having to track individual batch ids
+    (one per Item, created/removed as items are connected/disconnected).
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM charges WHERE status = 'pending' AND source_type = 'plaid' "
+            "ORDER BY date DESC, id DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+    items = [_row_to_dict(r) for r in rows]
+    categorized = sum(1 for i in items if i["category_id"])
+    batch_ids = sorted({i["upload_batch_id"] for i in items if i["upload_batch_id"]})
+    return {
+        "items": items,
+        "total": len(items),
+        "categorized": categorized,
+        "batch_ids": batch_ids,
+    }
+
+
 @router.put("/{charge_id}")
 def update_pending(charge_id: int, update: PendingUpdate):
     conn = get_connection()

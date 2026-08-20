@@ -1,12 +1,17 @@
-# Budget App
+# Ledger
 
-A credit card budgeting app: upload CSV exports, manually categorize every
-charge, track a monthly budget by category, and view spending analysis over time.
+A personal financial tracking app: connect your bank, credit card, and
+investment accounts through Plaid for live balances and automatic
+transaction import, categorize spend, track a monthly budget by category,
+and see net worth and spending analysis over time. Manual CSV/PDF import and
+manual entry still work too, as a fallback for anything Plaid doesn't cover.
 
-Runs locally on your machine **or** on [Railway](#deploy-to-railway) as a private
-web app with remote storage.
+Runs locally on your machine for development, and in production on an EC2
+instance behind a Cloudflare Tunnel at **lucasledger.uk** (see
+[Deploy](#deploy) below).
 
-Built with FastAPI + SQLite backend, React + Vite + Tailwind frontend.
+Built with FastAPI + SQLite backend, React + Vite + Tailwind frontend, and
+[Plaid](https://plaid.com) for account connections.
 
 ---
 
@@ -57,36 +62,64 @@ npm run dev
 The API's interactive docs are available at **http://localhost:8000/docs** any
 time the backend is running — useful for poking at endpoints directly.
 
+Plaid features stay off until you set `PLAID_CLIENT_ID` / `PLAID_SECRET` /
+`PLAID_TOKEN_ENCRYPTION_KEY` (see [below](#connecting-accounts-with-plaid)) —
+everything else works exactly the same without them.
+
 ---
 
 ## Where your data lives
 
 Everything is stored locally in `user_data/`:
 
-- `charges.db` — a SQLite database with every charge you've uploaded or entered
-- `budget.json` — your categories, monthly targets, and target history
+- `charges.db` — a single SQLite database with every charge you've uploaded,
+  entered, or synced from Plaid; your budget categories; and everything
+  Plaid-related (connected institutions/items, accounts, balances,
+  investment holdings). Plaid access tokens are stored encrypted inside it
+  — see [Connecting accounts with Plaid](#connecting-accounts-with-plaid).
 - `settings.json` — currency, date format, and CSV column mapping
 
-Nothing leaves your machine. You can back all of it up any time from
-**Settings → Backup & Export**, or just copy the `user_data/` folder.
+Nothing leaves your machine (or your EC2 instance, in production) except
+what Plaid needs to fetch your linked accounts' data. You can back all of it
+up any time from **Settings → Backup & Export**, or just copy the
+`user_data/` folder. Treat backup zips as sensitive — they include the
+encrypted Plaid access tokens.
 
 ---
 
 ## Using it
 
-1. **Upload** (top-right button, any page). You can add multiple CSV files at
-   once — pick each file and tell it whether that file is a **Credit Card**
-   or **Checking Account** export, so the right column mapping is used for
-   each. A credit card statement and a checking account export uploaded
-   together land in the same review screen, and everything downstream
-   (categorizing, budget, analysis) treats them identically as charges.
-2. On the **Review Upload** screen, assign a category to every row (add new
-   categories inline if needed), optionally add a nickname or mark something
-   as recurring, then **Confirm All**.
-3. Rows without a category block confirmation — you'll see exactly which ones.
+1. **Connect an account** (Accounts page) for anything Plaid supports —
+   checking/savings, credit cards, brokerage, and retirement accounts.
+   Balances and transactions sync automatically from there; a background job
+   keeps them current, and **Sync Now** on the Accounts page forces an
+   immediate refresh.
+2. Alternatively, **Upload** (top-right button, any page) still works for
+   CSV exports or a PDF payslip, for institutions Plaid doesn't cover. You
+   can add multiple CSV files at once — pick each file and tell it whether
+   that file is a **Credit Card** or **Checking Account** export, so the
+   right column mapping is used for each.
+3. New transactions land in a review queue only when the merchant hasn't
+   been seen before — recognized merchants (from prior categorization, CSV
+   or Plaid) auto-categorize straight into the budget. Everything else
+   (a CSV batch, or unrecognized transactions from a connected account)
+   shows up as a **"N to review"** link on the Accounts page and as a banner
+   on the Charges page — click through to the review screen, assign a
+   category to every remaining row (add new categories inline if needed),
+   optionally add a nickname or mark something as recurring, then
+   **Confirm All**. Rows without a category block confirmation — you'll see
+   exactly which ones. Charges only show up on the Charges page once
+   confirmed, whether they came from a CSV or from Plaid.
 4. From there:
-   - **Dashboard** — budget status, top categories, and recent charges for
-     whatever period you select
+   - **Dashboard** — budget status, net worth snapshot, top categories, and
+     recent charges for whatever period you select
+   - **Accounts** — every connected institution, collapsible to show/hide
+     its individual accounts, with live balances, reconnect/disconnect, and
+     manual accounts (e.g. cash) that don't come from Plaid
+   - **Investments** — holdings, asset-type allocation, unrealized gain/loss,
+     and a value-over-time chart for every connected brokerage/401k/403b/IRA
+   - **Net Worth** — assets vs. liabilities across every connected and
+     manual account, plus a net-worth-over-time chart
    - **Charges** — full history with filtering, sorting (including by
      source name), inline editing, and manual entry (for cash spend, etc.)
    - **Budget** — targets vs. actual spend per category, with expandable rows
@@ -106,12 +139,17 @@ Nothing leaves your machine. You can back all of it up any time from
   upload rather than failing the whole import; you'll see a warning listing
   which rows were skipped.
 - **Positive amounts (deposits, paychecks, payments, refunds) are always
-  ignored on import**, for both credit card and checking account files — this
-  app only tracks spend.
-- When you upload a CSV, any row whose merchant string matches a charge
-  you've categorized before gets pre-filled with that same category (and its
-  recurring flag) automatically, so repeat merchants don't need re-categorizing
-  every time. New/unrecognized merchants still start blank.
+  ignored on import**, whether from a CSV, manual entry, or Plaid — this app
+  only tracks spend. A Plaid transaction with a pending hold amount that
+  later posts at a different amount updates in place rather than duplicating.
+- Any charge whose merchant string matches one you've categorized before
+  gets pre-filled with that same category (and its recurring flag)
+  automatically — for CSV uploads this pre-fills the review screen; for
+  Plaid-synced transactions it auto-confirms straight into the budget, no
+  review needed. New/unrecognized merchants still start blank either way,
+  and land wherever the "N to review" link on Accounts/Charges points —
+  transactions from every connected account share one review queue there,
+  regardless of which institution or Sync Now run they came from.
 - There is **one budget** (one set of categories and monthly targets) that
   applies at all times — it isn't month-specific. The period filter on the
   Budget and Dashboard pages only changes which confirmed charges get summed
@@ -119,66 +157,155 @@ Nothing leaves your machine. You can back all of it up any time from
   it's directly comparable to your monthly target.
 - Split charges (one purchase across two categories) aren't supported yet —
   noted as a v1.1 feature in the original plan.
+- Disconnecting an institution on the Accounts page keeps its historical
+  charges (spending history doesn't disappear) — it just stops new
+  transactions and balances from syncing.
+- Plaid never hands over a retroactive balance history — every call only
+  ever returns the *current* balance, for accounts and investment holdings
+  alike. The Net Worth and Investments trend charts are built from Ledger's
+  own daily snapshots instead (taken on every sync and every manual balance
+  edit), so they start as a single point on whatever day an account was
+  first connected and fill in from there — there's no way to backfill a
+  chart for time before that.
+- Cost basis (and therefore gain/loss) on a holding depends on what the
+  institution reports to Plaid — some accounts, especially older 401k/403b
+  plans, don't include it. Those holdings still show up with a value, just
+  without a gain/loss figure.
 
 ---
 
-## Deploy to Railway
+## Connecting accounts with Plaid
 
-Host the app as a private web app with persistent remote storage. Local dev is
-unchanged — auth is only enforced when `API_KEY` is set on the server.
+Ledger uses [Plaid](https://plaid.com)'s free Trial plan (10 connected
+Items, uncapped API calls per Item) to pull live balances and transactions
+from Wells Fargo, Fidelity, Charles Schwab, and other supported
+institutions. See `PLAID_INTEGRATION_PLAN.md` at the repo root for the full
+design/rationale; this section is just the setup steps.
 
-### 1. Back up your local data
+### 1. Get Plaid credentials
 
-Before migrating, download a backup from **Settings → Download Backup** in the
-local app (or copy the `user_data/` folder).
+Locally, these live in a `.env` file at the repo root (next to `README.md`,
+`backend/`, `frontend/`) — `backend/config.py` loads it automatically via
+`python-dotenv`, so plain `uvicorn` / `run.bat` / `run.sh` all pick it up
+with no shell exports needed. It's gitignored, so it's safe to put real
+secrets in it; `.env.example` is the checked-in template if you ever need to
+recreate it (`cp .env.example .env`). In production, the EC2 host's real
+environment variables are set directly instead — there's no `.env` file in
+the Docker image, and a real env var there always wins over anything in
+`.env` anyway.
 
-### 2. Create the Railway project
+1. Sign up at [dashboard.plaid.com](https://dashboard.plaid.com) and create
+   an app — this gives you a `client_id` and a Sandbox `secret`.
+2. Open `.env` and fill in:
 
-1. Push this repo to GitHub (if it isn't already).
-2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**.
-3. Select this repository. Railway detects the `Dockerfile` via `railway.toml`.
+   ```
+   PLAID_CLIENT_ID=...
+   PLAID_SECRET=...          # the Sandbox secret to start
+   PLAID_ENV=sandbox
+   PLAID_TOKEN_ENCRYPTION_KEY=...
+   ```
 
-### 3. Add a persistent volume
+   Generate the encryption key once with:
 
-1. In your Railway service, open **Volumes** → **Add Volume**.
-2. Mount path: `/data`
-3. Size: 1 GB is plenty for personal use.
+   ```bash
+   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+   ```
 
-### 4. Set environment variables
+   **Back this key up somewhere durable, outside the repo.** Losing it makes
+   every stored access token permanently undecryptable — every account
+   would need to be re-linked.
 
-In **Variables**, add:
+3. Restart the backend. The Accounts page's **Connect Account** button will
+   start working; without these three variables set it stays disabled with
+   an explanation instead of erroring.
 
-| Variable | Value |
-|----------|-------|
-| `DATA_DIR` | `/data` |
-| `API_KEY` | A long random string (e.g. `openssl rand -hex 32`) |
+### 2. Test in Sandbox first
 
-Railway sets `PORT` automatically — don't override it.
+With `PLAID_ENV=sandbox`, Plaid Link connects to fake test institutions
+using Plaid's documented Sandbox credentials (e.g. username `user_good`,
+password `pass_good`) — no real bank data involved. Use this to validate the
+whole connect → sync → review flow before linking anything real.
 
-### 5. Deploy and restore your data
+### 3. Go to production
 
-1. Wait for the first deploy to finish. Railway gives you a public URL like
-   `https://your-app.up.railway.app`.
-2. Open the URL — you'll see a login screen. Enter the `API_KEY` you set.
-3. Go to **Settings → Restore from Backup** and upload the zip from step 1.
-4. Reload — your categories, charges, and settings should match your local copy.
+1. In the Plaid dashboard, request Production access and get a Production
+   `secret`.
+2. Update the environment: `PLAID_SECRET` to the Production secret,
+   `PLAID_ENV=production`.
+3. Link Wells Fargo first. Fidelity and Charles Schwab use Plaid's
+   OAuth-based Link flow and may need additional institution approval from
+   Plaid even on a paid plan — check the Plaid dashboard before relying on
+   them being available.
+4. Optionally set `PLAID_WEBHOOK_URL` (e.g.
+   `https://lucasledger.uk/api/plaid/webhook`) so Plaid pushes updates
+   instead of Ledger only picking them up on the next scheduled sync
+   (`PLAID_SYNC_INTERVAL_MINUTES`, default every 3 hours) or manual **Sync
+   Now**.
 
-### 6. Ongoing use
+### Notes
 
-- The Railway URL is your app from any browser.
-- Click **Lock** in the nav bar to clear the session API key.
-- Download backups regularly from **Settings** (same as local).
-- Keep using the local install only if you want an offline copy — pick one
-  source of truth to avoid drift.
+- Every connected institution counts as one Plaid "Item" against the Trial
+  plan's 10-Item limit, regardless of how many accounts it exposes (e.g.
+  Wells Fargo checking + credit card typically come through as accounts
+  under a single Item).
+- **Plaid explicitly warns: persist your access tokens and don't lose track
+  of them — every access token created in Production counts against the
+  Trial Item limit even after you stop using it.** Disconnecting an
+  institution from the Accounts page calls Plaid's `/item/remove` to
+  actually release the Item (not just forget it locally), so it stops
+  counting — don't just delete `charges.db` and assume old Items are gone.
+- Investment holdings and credit card/loan liability details (APR, minimum
+  payment) sync best-effort — most bank Items simply don't have those
+  products enabled, which is expected, not an error. Net worth is
+  calculated from each account's balance regardless.
+
+---
+
+## Deploy
+
+Ledger runs in production as a single Docker container on an EC2 instance,
+exposed at **lucasledger.uk** through a Cloudflare Tunnel (which also
+provides the HTTPS that Plaid Link and Plaid webhooks require).
+
+### Environment
+
+Set on the EC2 host (wherever `server-deploy.sh` / your process manager
+injects environment variables into the container):
+
+| Variable | Purpose |
+|----------|---------|
+| `DATA_DIR` | Persistent data directory (a mounted volume/bind mount, e.g. `/data`) |
+| `API_KEY` | Long random string (e.g. `openssl rand -hex 32`) — required in production |
+| `ALLOWED_ORIGINS` | Leave unset for same-origin (the normal production setup) |
+| `PLAID_CLIENT_ID` / `PLAID_SECRET` / `PLAID_ENV` / `PLAID_TOKEN_ENCRYPTION_KEY` | See [Connecting accounts with Plaid](#connecting-accounts-with-plaid) |
+| `PLAID_WEBHOOK_URL` | e.g. `https://lucasledger.uk/api/plaid/webhook` |
+
+### Deploying
+
+```bash
+./deploy.sh
+```
+
+SSHes to the EC2 instance and runs `server-deploy.sh` there, which rebuilds
+and restarts the Docker container. The persistent volume at `DATA_DIR`
+(containing `charges.db` and `settings.json`) survives redeploys.
+
+### Backing up before a risky change
+
+Download a backup from **Settings → Download Backup** before any migration
+or major change — it's the SQLite file (charges, categories, Plaid
+items/accounts/balances) plus `settings.json`, restorable from the same
+Settings page.
 
 ### Local dev vs production
 
-| | Local (`run.bat`) | Railway |
-|--|-------------------|---------|
+| | Local (`run.bat` / `run.sh`) | Production (EC2) |
+|--|-------------------------------|-------------------|
 | Auth | Off (no `API_KEY`) | On (`API_KEY` required) |
-| Data | `./user_data/` | `/data` volume |
-| Frontend | Vite dev server (:5173) | Served by FastAPI (same URL) |
+| Data | `./user_data/` | `DATA_DIR` volume on the host |
+| Frontend | Vite dev server (:5173) | Served by FastAPI (same origin) |
 | API URL | `http://localhost:8000` | Same origin (no config needed) |
+| Plaid | Sandbox (or off) | Production, once verified |
 
 To test auth locally, set `API_KEY=something` in your shell before starting
 the backend.

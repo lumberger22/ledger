@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Trash2, Repeat, CheckCircle2, AlertCircle } from "lucide-react";
 import {
   getPending,
+  getPlaidPending,
   updatePending,
   deletePending,
   confirmBatch,
@@ -15,9 +16,15 @@ const currency = (n) =>
 export default function UploadPreview() {
   const [searchParams] = useSearchParams();
   const batchId = searchParams.get("batch_id");
+  // Connected-account transactions don't come from a single upload batch —
+  // one is created per Plaid Item, and Items come and go as accounts are
+  // connected/disconnected — so this mode looks up every pending Plaid
+  // charge across all Items instead of requiring a batch_id in the URL.
+  const plaidMode = searchParams.get("source") === "plaid";
   const navigate = useNavigate();
 
   const [items, setItems] = useState([]);
+  const [batchIds, setBatchIds] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -27,19 +34,22 @@ export default function UploadPreview() {
   const [addingCategoryFor, setAddingCategoryFor] = useState(null);
 
   const load = useCallback(async () => {
-    if (!batchId) return;
+    if (!plaidMode && !batchId) return;
     setLoading(true);
     try {
       const [pendingRes, budgetRes] = await Promise.all([
-        getPending(batchId),
+        plaidMode ? getPlaidPending() : getPending(batchId),
         getBudget(),
       ]);
       setItems(pendingRes.items);
+      setBatchIds(
+        plaidMode ? pendingRes.batch_ids : [...new Set(batchId.split(","))],
+      );
       setCategories(budgetRes.categories.filter((c) => !c.archived));
     } finally {
       setLoading(false);
     }
-  }, [batchId]);
+  }, [plaidMode, batchId]);
 
   useEffect(() => {
     load();
@@ -91,8 +101,8 @@ export default function UploadPreview() {
     setConfirming(true);
     setError(null);
     try {
-      await confirmBatch(batchId);
-      navigate(`/charges?batch=${batchId}`);
+      await confirmBatch(batchIds);
+      navigate(plaidMode ? "/charges" : `/charges?batch=${batchId}`);
     } catch (e) {
       if (e.detail?.missing_ids) {
         setMissingIds(e.detail.missing_ids);
@@ -105,7 +115,7 @@ export default function UploadPreview() {
     }
   }
 
-  if (!batchId) {
+  if (!plaidMode && !batchId) {
     return (
       <p className="text-sm text-ink-500">
         No upload batch specified. Try uploading a CSV again.
@@ -113,12 +123,18 @@ export default function UploadPreview() {
     );
   }
   if (loading) {
-    return <p className="text-sm text-ink-500">Loading uploaded rows…</p>;
+    return (
+      <p className="text-sm text-ink-500">
+        {plaidMode ? "Loading connected account transactions…" : "Loading uploaded rows…"}
+      </p>
+    );
   }
   if (!items.length) {
     return (
       <p className="text-sm text-ink-500">
-        Nothing left to review in this batch — it may already be confirmed.
+        {plaidMode
+          ? "No connected-account transactions need review right now — you're all caught up."
+          : "Nothing left to review in this batch — it may already be confirmed."}
       </p>
     );
   }
@@ -130,11 +146,12 @@ export default function UploadPreview() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display font-bold text-2xl text-ink-900">
-            Review Upload
+            {plaidMode ? "Review Connected Account Transactions" : "Review Upload"}
           </h1>
           <p className="text-sm text-ink-500 mt-0.5">
-            Assign a category to every row, then confirm to add them to your
-            Charges History.
+            {plaidMode
+              ? "New transactions from unrecognized merchants wait here for a category before they show up under Charges. Recognized merchants skip this and confirm automatically."
+              : "Assign a category to every row, then confirm to add them to your Charges History."}
           </p>
         </div>
         <div className="flex items-center gap-3">

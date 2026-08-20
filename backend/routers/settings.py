@@ -47,7 +47,13 @@ def update_settings(settings: Settings):
 
 @router.get("/backup")
 def download_backup():
-    """One-click download of the SQLite file + all JSON files as a zip."""
+    """
+    One-click download of the SQLite file + JSON config files as a zip.
+    Categories, Plaid item/account records, and balances all live inside
+    charges.db now, so this single file covers everything except the
+    settings.json CSV mappings — note the db includes encrypted Plaid access
+    tokens (see PLAID_TOKEN_ENCRYPTION_KEY), so treat this zip as sensitive.
+    """
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         if DB_PATH.exists():
@@ -99,7 +105,10 @@ async def restore_backup(file: UploadFile = File(...)):
 
 @router.post("/reset")
 def reset_all_data(confirm: bool = False):
-    """Danger zone: wipe all charges and reset budget/settings to defaults."""
+    """
+    Danger zone: wipe all charges, categories, Plaid connections/accounts,
+    and settings, resetting everything to defaults.
+    """
     if not confirm:
         return {
             "reset": False,
@@ -108,14 +117,32 @@ def reset_all_data(confirm: bool = False):
 
     conn = get_connection()
     try:
+        # Best-effort: tell Plaid to release each connected Item before we
+        # forget its access token locally, so it doesn't keep counting
+        # against the Trial plan's Item limit or sitting live at Plaid with
+        # nothing local pointing at it. Never block the local reset on this.
+        try:
+            from services import plaid_client
+            from services.crypto import decrypt_token
+
+            for row in conn.execute("SELECT access_token FROM plaid_items"):
+                try:
+                    plaid_client.remove_item(decrypt_token(row["access_token"]))
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
         conn.execute("DELETE FROM charges")
+        conn.execute("DELETE FROM investment_holdings")
+        conn.execute("DELETE FROM accounts")
+        conn.execute("DELETE FROM plaid_items")
+        conn.execute("DELETE FROM categories")
+        conn.execute("DELETE FROM budget_meta")
         conn.commit()
     finally:
         conn.close()
 
-    write_json(
-        DATA_DIR / "budget.json", {"categories": [], "history": [], "income": None}
-    )
     write_json(SETTINGS_PATH, DEFAULT_SETTINGS)
 
     init_db()

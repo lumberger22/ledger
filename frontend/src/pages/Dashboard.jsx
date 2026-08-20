@@ -4,11 +4,13 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   TrendingUp,
+  TrendingDown,
   Repeat,
   Wallet,
   CircleDollarSign,
 } from "lucide-react";
 import { getDashboard } from "../api/dashboard";
+import { getNetWorth } from "../api/networth";
 import PeriodFilter from "../components/PeriodFilter";
 import CategoryBadge from "../components/CategoryBadge";
 import EmptyState from "../components/EmptyState";
@@ -27,6 +29,7 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [netWorth, setNetWorth] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -35,6 +38,15 @@ export default function Dashboard() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [period]);
+
+  useEffect(() => {
+    // Net worth doesn't depend on the period filter (it's a point-in-time
+    // snapshot), so it's fetched once, separately from the rest of the
+    // dashboard, and simply doesn't render if nothing's connected yet.
+    getNetWorth()
+      .then(setNetWorth)
+      .catch(() => setNetWorth(null));
+  }, []);
 
   if (error) {
     return (
@@ -48,7 +60,10 @@ export default function Dashboard() {
     return <div className="text-ink-500 text-sm">Loading…</div>;
   }
 
-  if (data && !data.has_data && !data.has_income) {
+  const hasNetWorthData =
+    (netWorth?.assets?.accounts?.length || 0) + (netWorth?.liabilities?.accounts?.length || 0) > 0;
+
+  if (data && !data.has_data && !data.has_income && !hasNetWorthData) {
     return (
       <div className="bg-surface border border-line rounded-xl2 shadow-card">
         <EmptyState
@@ -78,6 +93,36 @@ export default function Dashboard() {
         </h1>
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
+
+      {netWorth && netWorth.assets.accounts.length + netWorth.liabilities.accounts.length > 0 && (
+        <Link
+          to="/net-worth"
+          className="flex items-center justify-between bg-surface border border-line rounded-xl2 shadow-card px-6 py-4 hover:border-accent/30 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${netWorth.net_worth >= 0 ? "bg-good/10" : "bg-over/10"}`}
+            >
+              {netWorth.net_worth >= 0 ? (
+                <TrendingUp size={16} className="text-good" />
+              ) : (
+                <TrendingDown size={16} className="text-over" />
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
+                Net Worth
+              </p>
+              <p className="font-display font-bold text-xl text-ink-900 tabular">
+                {currency(netWorth.net_worth)}
+              </p>
+            </div>
+          </div>
+          <span className="text-sm font-semibold text-accent hover:text-accent-dark flex items-center gap-1">
+            View Accounts <ArrowRight size={14} />
+          </span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Budget summary card */}

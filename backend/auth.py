@@ -8,7 +8,11 @@ from fastapi import HTTPException, Request, status
 
 from config import API_KEY
 
-PUBLIC_PATHS = {"/api/health"}
+# /api/plaid/webhook is unauthenticated because Plaid's servers, not the
+# browser, call it and can't send X-API-Key — see routers/plaid.py's
+# docstring on that endpoint for the (currently just best-effort) hardening
+# story around trusting it.
+PUBLIC_PATHS = {"/api/health", "/api/plaid/webhook"}
 
 
 def verify_api_key(request: Request) -> None:

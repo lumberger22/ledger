@@ -1,52 +1,46 @@
-from datetime import datetime, timezone
 from fastapi import APIRouter, Query
 
-from config import DATA_DIR
 from db import get_connection
 from models import BudgetUpdate
-from services.json_store import read_json, write_json
 from services import analytics
+from services import categories_store as cats
 
 router = APIRouter(prefix="/api/budget", tags=["budget"])
-
-BUDGET_PATH = DATA_DIR / "budget.json"
-
-DEFAULT_BUDGET = {"categories": [], "history": [], "income": None}
 
 
 @router.get("")
 def get_budget():
-    return read_json(BUDGET_PATH, DEFAULT_BUDGET)
+    """
+    Same response shape the frontend has always gotten from budget.json
+    ({categories, income, history}) — categories and income now come from
+    the database instead. `history` is kept for API-shape compatibility but
+    was already unused (no endpoint ever wrote to it).
+    """
+    conn = get_connection()
+    try:
+        categories = cats.list_categories(conn)
+        income = cats.get_manual_income(conn)
+    finally:
+        conn.close()
+    return {"categories": categories, "income": income, "history": []}
 
 
 @router.put("")
 def update_budget(update: BudgetUpdate):
     """
-    Replace the single global category list / targets. This budget applies
-    uniformly regardless of period — the period filter only changes which
-    confirmed charges get summed against it (see /status below), not which
-    targets are in effect.
+    Upsert the category list / targets and the manual income override.
+    Categories missing from the payload are left in place (never deleted
+    here) — the "remove" action in the UI is an archive toggle, matching the
+    behavior this endpoint has always had.
     """
-    current = read_json(BUDGET_PATH, DEFAULT_BUDGET)
-    current_by_id = {c["id"]: c for c in current.get("categories", [])}
-
-    new_categories = [c.model_dump() for c in update.categories]
-    for c in new_categories:
-        if not c.get("created_at"):
-            prev = current_by_id.get(c["id"])
-            c["created_at"] = (
-                prev.get("created_at")
-                if prev
-                else datetime.now(timezone.utc).isoformat()
-            )
-
-    data = {
-        "categories": new_categories,
-        "history": current.get("history", []),
-        "income": update.income,
-    }
-    write_json(BUDGET_PATH, data)
-    return data
+    conn = get_connection()
+    try:
+        cats.upsert_categories(conn, [c.model_dump() for c in update.categories])
+        cats.set_manual_income(conn, update.income)
+        conn.commit()
+    finally:
+        conn.close()
+    return get_budget()
 
 
 @router.get("/status")
@@ -59,23 +53,21 @@ def budget_status(
     confirmed charges get summed. For "3month_avg", the 3-month total is
     divided by 3 so it's comparable to the (single, monthly) target.
     """
-    budget = read_json(BUDGET_PATH, DEFAULT_BUDGET)
     start_d, end_d = analytics.resolve_period(period, start, end)
 
     conn = get_connection()
+    active_categories = cats.list_categories(conn, include_archived=False)
+    manual_income = cats.get_manual_income(conn)
+
     spend = analytics.spend_by_category(conn, start_d, end_d)
 
     if period == "3month_avg":
         spend = {k: round(v / 3, 2) for k, v in spend.items()}
 
-    active_categories = budget.get("categories", [])
-
     results = []
     total_spent = 0.0
     total_target = 0.0
     for cat in active_categories:
-        if cat.get("archived"):
-            continue
         spent = spend.get(cat["id"], 0.0)
         target = cat.get("monthly_target", 0.0)
         total_spent += spent
@@ -100,7 +92,6 @@ def budget_status(
 
     uncategorized = spend.get("uncategorized", 0.0)
 
-    manual_income = budget.get("income")
     effective_income = manual_income
     income_source = "manual" if manual_income is not None else "paystub"
     if effective_income is None:

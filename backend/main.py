@@ -1,4 +1,4 @@
-from pathlib import Path
+import logging
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,12 +6,27 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from auth import verify_api_key
-from config import ALLOWED_ORIGINS, ENABLE_DOCS, STATIC_DIR
-from db import init_db
-from routers import upload, pending, charges, budget, analysis, dashboard, settings, income
+from config import ALLOWED_ORIGINS, ENABLE_DOCS, PLAID_CONFIGURED, PLAID_SYNC_INTERVAL_MINUTES, STATIC_DIR
+from db import get_connection, init_db
+from routers import (
+    accounts,
+    analysis,
+    budget,
+    charges,
+    dashboard,
+    income,
+    investments,
+    networth,
+    pending,
+    plaid,
+    settings,
+    upload,
+)
+
+logger = logging.getLogger("ledger")
 
 app = FastAPI(
-    title="Budget App",
+    title="Ledger",
     version="1.0.0",
     docs_url="/docs" if ENABLE_DOCS else None,
     redoc_url="/redoc" if ENABLE_DOCS else None,
@@ -40,9 +55,45 @@ async def auth_middleware(request: Request, call_next):
 
     return await call_next(request)
 
+
+_scheduler = None
+
+
+def _run_scheduled_sync():
+    from services import plaid_sync
+
+    conn = get_connection()
+    try:
+        results = plaid_sync.sync_all_items(conn)
+        if results:
+            logger.info("Plaid scheduled sync: %s", results)
+    except Exception:  # noqa: BLE001 - a scheduled run must never crash the process
+        logger.exception("Plaid scheduled sync failed")
+    finally:
+        conn.close()
+
+
 @app.on_event("startup")
 def on_startup():
     init_db()
+
+    global _scheduler
+    if PLAID_CONFIGURED and _scheduler is None:
+        from apscheduler.schedulers.background import BackgroundScheduler
+
+        _scheduler = BackgroundScheduler(daemon=True)
+        # First run fires one interval from now (APScheduler's default for an
+        # "interval" trigger) — not immediately on every restart. Use
+        # POST /api/plaid/sync for an on-demand sync right away.
+        _scheduler.add_job(
+            _run_scheduled_sync,
+            "interval",
+            minutes=PLAID_SYNC_INTERVAL_MINUTES,
+        )
+        _scheduler.start()
+        logger.info(
+            "Plaid background sync scheduled every %s minutes", PLAID_SYNC_INTERVAL_MINUTES
+        )
 
 
 # Initialize eagerly so the DB/tables exist even without ASGI startup lifecycle.
@@ -56,6 +107,10 @@ app.include_router(analysis.router)
 app.include_router(dashboard.router)
 app.include_router(settings.router)
 app.include_router(income.router)
+app.include_router(plaid.router)
+app.include_router(accounts.router)
+app.include_router(networth.router)
+app.include_router(investments.router)
 
 
 @app.get("/api/health")

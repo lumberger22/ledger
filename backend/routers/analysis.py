@@ -1,22 +1,11 @@
 from datetime import datetime
 from fastapi import APIRouter, Query
 
-from config import DATA_DIR
 from db import get_connection
 from services import analytics
-from services.json_store import read_json
+from services import categories_store as cats
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
-
-BUDGET_PATH = DATA_DIR / "budget.json"
-DEFAULT_BUDGET = {"categories": [], "history": [], "income": None}
-
-
-def _category_name_map(budget: dict) -> dict:
-    return {
-        c["id"]: {"name": c["name"], "color": c.get("color")}
-        for c in budget.get("categories", [])
-    }
 
 
 @router.get("")
@@ -24,11 +13,11 @@ def get_analysis(
     period: str = Query("this_month"), start: str = Query(None), end: str = Query(None)
 ):
     start_d, end_d = analytics.resolve_period(period, start, end)
-    budget = read_json(BUDGET_PATH, DEFAULT_BUDGET)
-    names = _category_name_map(budget)
 
     conn = get_connection()
     try:
+        names = cats.category_meta_map(conn)
+        all_categories = cats.list_categories(conn)
         by_category = analytics.spend_by_category(conn, start_d, end_d)
         merchants = analytics.spend_by_merchant(conn, start_d, end_d, limit=500)
         monthly_trend = analytics.spend_by_month(conn, months_back=6)
@@ -80,7 +69,7 @@ def get_analysis(
         category_breakdown.sort(key=lambda x: x["total"], reverse=True)
 
         budget_variance_history = analytics.category_budget_variance_history(
-            conn, budget.get("categories", []), months_back=6
+            conn, all_categories, months_back=6
         )
 
         pace = {}

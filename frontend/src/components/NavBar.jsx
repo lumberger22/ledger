@@ -9,12 +9,18 @@ import {
   Upload,
   Wallet,
   LogOut,
+  Landmark,
+  TrendingUp,
+  PieChart,
 } from "lucide-react";
 import { useUploadModal } from "../context/UploadModalContext";
 import { getStoredApiKey } from "../api/client";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/accounts", label: "Accounts", icon: Landmark },
+  { to: "/investments", label: "Investments", icon: PieChart },
+  { to: "/net-worth", label: "Net Worth", icon: TrendingUp },
   { to: "/charges", label: "Charges", icon: Receipt },
   { to: "/budget", label: "Budget", icon: PiggyBank },
   { to: "/income", label: "Income", icon: CircleDollarSign },

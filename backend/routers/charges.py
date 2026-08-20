@@ -79,8 +79,8 @@ def create_charge(charge: ChargeCreate):
             """
             INSERT INTO charges
               (date, amount, source, nickname, category_id, recurring, notes,
-               status, upload_batch_id, source_file, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 'manual', ?, ?)
+               status, upload_batch_id, source_file, source_type, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 'manual', 'manual', ?, ?)
             """,
             (
                 charge.date,
