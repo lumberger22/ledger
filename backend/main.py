@@ -28,7 +28,15 @@ app.add_middleware(
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     if request.url.path != "/api/health":
-        verify_api_key(request)
+        try:
+            verify_api_key(request)
+        except HTTPException as exc:
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail},
+            )
 
     return await call_next(request)
 
