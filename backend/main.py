@@ -25,12 +25,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    verify_api_key(request)
-    return await call_next(request)
+    if request.url.path != "/api/health":
+        verify_api_key(request)
 
+    return await call_next(request)
 
 @app.on_event("startup")
 def on_startup():
