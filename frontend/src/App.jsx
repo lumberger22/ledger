@@ -50,6 +50,12 @@ export default function App() {
       window.removeEventListener("budget-app-unauthorized", onUnauthorized);
   }, []);
 
+  useEffect(() => {
+    if (authState === "unlocked") {
+      window.scrollTo(0, 0);
+    }
+  }, [authState]);
+
   function handleLoginSuccess() {
     setAuthState("unlocked");
   }
