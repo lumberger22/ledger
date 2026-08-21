@@ -228,19 +228,28 @@ whole connect → sync → review flow before linking anything real.
 
 ### 3. Go to production
 
-1. In the Plaid dashboard, request Production access and get a Production
-   `secret`.
+1. In the Plaid dashboard ([dashboard.plaid.com/developers/keys](https://dashboard.plaid.com/developers/keys)),
+   grab the Production `secret` — on the Trial plan this is auto-approved
+   for most developers, no multi-day review. You may be prompted to fill in
+   a "use case description" under Link Customization first; Plaid requires
+   that before Link will work in Production.
 2. Update the environment: `PLAID_SECRET` to the Production secret,
-   `PLAID_ENV=production`.
-3. Link Wells Fargo first. Fidelity and Charles Schwab use Plaid's
-   OAuth-based Link flow and may need additional institution approval from
-   Plaid even on a paid plan — check the Plaid dashboard before relying on
-   them being available.
-4. Optionally set `PLAID_WEBHOOK_URL` (e.g.
-   `https://lucasledger.uk/api/plaid/webhook`) so Plaid pushes updates
-   instead of Ledger only picking them up on the next scheduled sync
-   (`PLAID_SYNC_INTERVAL_MINUTES`, default every 3 hours) or manual **Sync
-   Now**.
+   `PLAID_ENV=production`. `PLAID_CLIENT_ID` stays the same across
+   environments; only the secret changes.
+3. Link Wells Fargo first, then Fidelity and Charles Schwab. All three use
+   Plaid's OAuth-based Link flow, but the Trial plan already includes access
+   to most OAuth institutions without the separate full-Production OAuth
+   registration process — no extra approval step expected, though it's
+   worth confirming in the dashboard before relying on it.
+4. `PLAID_WEBHOOK_URL` is optional and off by default here on purpose: the
+   `/api/plaid/webhook` endpoint currently trusts any POST that names a
+   known `item_id`, with no signature verification (Plaid can't send the
+   app's `X-API-Key`, so this is intentionally the one unauthenticated
+   route — see the comment in `routers/plaid.py`). Leaving it unset is
+   fine — balances and transactions still update on the scheduled sync
+   (`PLAID_SYNC_INTERVAL_MINUTES`, default every 3 hours) and via manual
+   **Sync Now**. Only set it once the webhook verifies Plaid's JWT
+   signature.
 
 ### Notes
 

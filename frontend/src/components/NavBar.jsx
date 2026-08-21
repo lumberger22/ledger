@@ -7,7 +7,6 @@ import {
   CircleDollarSign,
   Settings as SettingsIcon,
   Upload,
-  Wallet,
   LogOut,
   Landmark,
   TrendingUp,
@@ -38,7 +37,11 @@ export default function NavBar({ onLogout }) {
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2 text-ink-900">
             <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-              <Wallet size={16} className="text-white" strokeWidth={2.25} />
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <rect x="3.5" y="6.5" width="17" height="12" rx="3" fill="none" stroke="white" strokeWidth="1.6" />
+                <path d="M3.5 10.5 L20.5 8" stroke="white" strokeWidth="1.2" opacity="0.6" fill="none" strokeLinecap="round" />
+                <circle cx="16" cy="13" r="1.7" fill="#C7902E" />
+              </svg>
             </div>
             <span className="font-display font-bold text-[15px] tracking-tight">
               Ledger
