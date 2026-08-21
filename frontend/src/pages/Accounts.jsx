@@ -37,7 +37,11 @@ const currency = (n) =>
 
 const STATUS_COPY = {
   good: { label: "Connected", color: "text-good", bg: "bg-good/10" },
-  login_required: { label: "Needs reconnect", color: "text-warn", bg: "bg-warn/10" },
+  login_required: {
+    label: "Needs reconnect",
+    color: "text-warn",
+    bg: "bg-warn/10",
+  },
   error: { label: "Sync error", color: "text-over", bg: "bg-over/10" },
 };
 
@@ -66,7 +70,10 @@ export default function Accounts() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [itemsRes, accountsRes] = await Promise.all([listPlaidItems(), listAccounts()]);
+      const [itemsRes, accountsRes] = await Promise.all([
+        listPlaidItems(),
+        listAccounts(),
+      ]);
       setItems(itemsRes.items);
       setManualAccounts(accountsRes.accounts.filter((a) => a.is_manual));
     } finally {
@@ -137,7 +144,11 @@ export default function Accounts() {
   }
 
   async function handleDisconnect(item) {
-    if (!confirm(`Disconnect ${item.institution_name || "this institution"}? Past charges stay, but balances and new transactions will stop syncing.`)) {
+    if (
+      !confirm(
+        `Disconnect ${item.institution_name || "this institution"}? Past charges stay, but balances and new transactions will stop syncing.`,
+      )
+    ) {
       return;
     }
     await removePlaidItem(item.plaid_item_id);
@@ -184,7 +195,9 @@ export default function Accounts() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Accounts</h1>
+        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
+          Accounts
+        </h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           {plaidPendingCount > 0 && (
             <Link
@@ -215,7 +228,8 @@ export default function Accounts() {
             disabled={connecting}
             className="flex items-center justify-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors shadow-card disabled:opacity-60"
           >
-            <Landmark size={15} /> {connecting ? "Connecting…" : "Connect Account"}
+            <Landmark size={15} />{" "}
+            {connecting ? "Connecting…" : "Connect Account"}
           </button>
         </div>
       </div>
@@ -238,7 +252,9 @@ export default function Accounts() {
             <input
               required
               value={manualDraft.name}
-              onChange={(e) => setManualDraft({ ...manualDraft, name: e.target.value })}
+              onChange={(e) =>
+                setManualDraft({ ...manualDraft, name: e.target.value })
+              }
               placeholder="Cash, Venmo, …"
               className="text-sm rounded-lg border border-line px-3 py-2 w-full sm:w-48"
             />
@@ -249,7 +265,9 @@ export default function Accounts() {
             </label>
             <select
               value={manualDraft.type}
-              onChange={(e) => setManualDraft({ ...manualDraft, type: e.target.value })}
+              onChange={(e) =>
+                setManualDraft({ ...manualDraft, type: e.target.value })
+              }
               className="text-sm rounded-lg border border-line px-3 py-2 w-full sm:w-auto"
             >
               {ACCOUNT_TYPES.map((t) => (
@@ -268,7 +286,10 @@ export default function Accounts() {
               step="0.01"
               value={manualDraft.current_balance}
               onChange={(e) =>
-                setManualDraft({ ...manualDraft, current_balance: e.target.value })
+                setManualDraft({
+                  ...manualDraft,
+                  current_balance: e.target.value,
+                })
               }
               className="text-sm rounded-lg border border-line px-3 py-2 w-full sm:w-32 tabular"
             />
@@ -344,7 +365,9 @@ export default function Accounts() {
                         </span>
                         <span className="text-xs text-ink-500 tabular">
                           {accountCount} account{accountCount !== 1 ? "s" : ""}
-                          {accountCount > 0 ? ` · ${currency(combinedBalance)}` : ""}
+                          {accountCount > 0
+                            ? ` · ${currency(combinedBalance)}`
+                            : ""}
                         </span>
                       </div>
                     </div>
@@ -372,21 +395,34 @@ export default function Accounts() {
                       <Unplug size={15} />
                     </button>
                     {isExpanded ? (
-                      <ChevronDown size={16} className="text-ink-500 shrink-0" />
+                      <ChevronDown
+                        size={16}
+                        className="text-ink-500 shrink-0"
+                      />
                     ) : (
-                      <ChevronRight size={16} className="text-ink-500 shrink-0" />
+                      <ChevronRight
+                        size={16}
+                        className="text-ink-500 shrink-0"
+                      />
                     )}
                   </div>
                 </div>
                 {isExpanded && (
                   <div className="divide-y divide-line">
                     {item.accounts.length === 0 ? (
-                      <p className="text-sm text-ink-500 p-4">No accounts synced yet.</p>
+                      <p className="text-sm text-ink-500 p-4">
+                        No accounts synced yet.
+                      </p>
                     ) : (
                       item.accounts.map((a) => (
-                        <div key={a.id} className="flex items-center justify-between gap-2 p-3 sm:p-4">
+                        <div
+                          key={a.id}
+                          className="flex items-center justify-between gap-2 p-3 sm:p-4"
+                        >
                           <div>
-                            <p className="text-sm font-medium text-ink-900">{a.name}</p>
+                            <p className="text-sm font-medium text-ink-900">
+                              {a.name}
+                            </p>
                             <p className="text-xs text-ink-500">
                               {a.type} {a.mask ? `···· ${a.mask}` : ""}
                               {a.type === "investment" && (
@@ -420,13 +456,20 @@ export default function Accounts() {
                 <div className="w-9 h-9 rounded-full bg-black/[0.05] flex items-center justify-center shrink-0">
                   <Wallet size={16} className="text-ink-500" />
                 </div>
-                <p className="font-display font-semibold text-ink-900">Manual Accounts</p>
+                <p className="font-display font-semibold text-ink-900">
+                  Manual Accounts
+                </p>
               </div>
               <div className="divide-y divide-line">
                 {manualAccounts.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between p-4">
+                  <div
+                    key={a.id}
+                    className="flex items-center justify-between p-4"
+                  >
                     <div className={a.is_hidden ? "opacity-40" : ""}>
-                      <p className="text-sm font-medium text-ink-900">{a.name}</p>
+                      <p className="text-sm font-medium text-ink-900">
+                        {a.name}
+                      </p>
                       <p className="text-xs text-ink-500">{a.type}</p>
                     </div>
                     <div className="flex items-center gap-3">

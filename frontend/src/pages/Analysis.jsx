@@ -67,9 +67,8 @@ const compactCurrency = (n) =>
   `$${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const PERIOD_OPTIONS = [
-  { value: "30d", label: "30 Days" },
   { value: "this_month", label: "This Month" },
-  { value: "last_month", label: "Last Month" },
+  { value: "30d", label: "30 Days" },
   { value: "ytd", label: "YTD" },
 ];
 

@@ -32,9 +32,8 @@ const signedCurrency = (n) => (
   </span>
 );
 const PERIODS = [
-  { value: "30d", label: "30 Days" },
   { value: "this_month", label: "This Month" },
-  { value: "last_month", label: "Last Month" },
+  { value: "30d", label: "30 Days" },
   { value: "3month_avg", label: "3-Month Avg" },
 ];
 
@@ -179,9 +178,12 @@ export default function Budget() {
           {!editing && (
             <button
               onClick={startEditing}
-              className="flex items-center gap-1.5 text-sm font-semibold text-accent border border-accent/30 hover:bg-accent-light px-3 py-1.5 rounded-lg"
+              title="Edit Budget"
+              aria-label="Edit Budget"
+              className="flex items-center gap-1.5 text-sm font-semibold text-accent border border-accent/30 hover:bg-accent-light p-2 sm:px-3 sm:py-1.5 rounded-lg"
             >
-              <Pencil size={13} /> Edit Budget
+              <Pencil size={13} />
+              <span className="hidden sm:inline">Edit Budget</span>
             </button>
           )}
         </div>

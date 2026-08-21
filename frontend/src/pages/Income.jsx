@@ -208,9 +208,12 @@ export default function Income() {
           <PeriodFilter value={period} onChange={setPeriod} options={PERIODS} />
           <button
             onClick={() => setUploadOpen(true)}
-            className="flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-semibold px-3.5 py-2 rounded-lg shadow-card"
+            title="Upload Payslip"
+            aria-label="Upload Payslip"
+            className="flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-semibold p-2 sm:px-3.5 sm:py-2 rounded-lg shadow-card"
           >
-            <UploadCloud size={15} /> Upload Payslip
+            <UploadCloud size={15} />
+            <span className="hidden sm:inline">Upload Payslip</span>
           </button>
         </div>
       </div>
