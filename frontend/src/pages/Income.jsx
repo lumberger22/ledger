@@ -29,7 +29,7 @@ const currency = (n) =>
 
 function MetricCard({ label, value, sublabel, icon: Icon }) {
   return (
-    <div className="bg-surface border border-line rounded-xl2 shadow-card p-5">
+    <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-2">
@@ -73,17 +73,17 @@ function PaystubRow({ stub, expanded, onToggle }) {
     <div className="border border-line rounded-xl overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-black/[0.015]"
+        className="w-full px-3 sm:px-4 py-3 flex items-center justify-between gap-2 hover:bg-black/[0.015]"
       >
-        <div className="text-left">
-          <p className="text-sm font-semibold text-ink-900">
+        <div className="text-left min-w-0">
+          <p className="text-sm font-semibold text-ink-900 truncate">
             {stub.pay_period_start} → {stub.pay_period_end}
           </p>
           <p className="text-xs text-ink-500 mt-0.5">
             Check date {stub.check_date}
           </p>
         </div>
-        <div className="flex items-center gap-5 text-right">
+        <div className="flex items-center gap-3 sm:gap-5 text-right shrink-0">
           <div className="hidden sm:block">
             <p className="text-xs text-ink-500">Gross</p>
             <p className="text-sm tabular font-medium">
@@ -197,7 +197,7 @@ export default function Income() {
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink-900">
+          <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
             Income
           </h1>
           <p className="text-sm text-ink-500 mt-1">
@@ -227,7 +227,7 @@ export default function Income() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
             <MetricCard
               label="Gross Pay"
               value={summary.gross}
@@ -260,7 +260,7 @@ export default function Income() {
             />
           </div>
 
-          <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+          <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
             <div className="mb-4">
               <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
                 Savings & Retirement Rates
@@ -299,7 +299,7 @@ export default function Income() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <div className="lg:col-span-2 bg-surface border border-line rounded-xl2 shadow-card p-6">
+            <div className="lg:col-span-2 bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
@@ -314,7 +314,7 @@ export default function Income() {
               <CategoryBreakdownChart data={summary.flow_breakdown} />
             </div>
 
-            <div className="lg:col-span-3 bg-surface border border-line rounded-xl2 shadow-card p-6">
+            <div className="lg:col-span-3 bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
               <div className="mb-2">
                 <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
                   Monthly Income Trend
@@ -328,7 +328,7 @@ export default function Income() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+            <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
               <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-3">
                 Payment Destinations
               </p>
@@ -354,7 +354,7 @@ export default function Income() {
               </div>
             </div>
 
-            <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+            <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
               <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-3">
                 Detailed Deductions & Benefits
               </p>
@@ -386,7 +386,7 @@ export default function Income() {
             </div>
           </div>
 
-          <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+          <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">

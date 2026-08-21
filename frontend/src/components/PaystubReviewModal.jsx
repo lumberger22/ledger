@@ -109,9 +109,9 @@ export default function PaystubReviewModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 sm:px-4 py-5">
       <div className="bg-surface rounded-xl2 shadow-cardHover w-full max-w-5xl max-h-[92vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-line shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-line shrink-0">
           <div>
             <h2 className="font-display font-bold text-lg text-ink-900">
               Review Payslip
@@ -128,7 +128,7 @@ export default function PaystubReviewModal({
           </button>
         </div>
 
-        <div className="overflow-y-auto px-6 py-5 space-y-3">
+        <div className="overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-3">
           {drafts.map((stub, index) => {
             const isOpenStub = expanded === index;
             const sectionGroups = {};
@@ -350,12 +350,12 @@ export default function PaystubReviewModal({
         </div>
 
         {error && (
-          <div className="mx-6 mb-3 text-sm text-over bg-over/10 border border-over/30 rounded-lg px-3 py-2">
+          <div className="mx-4 sm:mx-6 mb-3 text-sm text-over bg-over/10 border border-over/30 rounded-lg px-3 py-2">
             {error}
           </div>
         )}
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-line shrink-0">
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-line shrink-0">
           <p className="text-xs text-ink-500">
             {drafts.length} paystub{drafts.length === 1 ? "" : "s"} ready to
             save

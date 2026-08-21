@@ -159,14 +159,14 @@ export default function Budget() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-2xl text-ink-900">Budget</h1>
+        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Budget</h1>
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center bg-black/[0.04] rounded-lg p-1 gap-0.5">
+          <div className="inline-flex items-center bg-black/[0.04] rounded-lg p-1 gap-0.5 overflow-x-auto max-w-full">
             {PERIODS.map((p) => (
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
                   period === p.value
                     ? "bg-white text-ink-900 shadow-sm"
                     : "text-ink-500 hover:text-ink-900"
@@ -193,7 +193,7 @@ export default function Budget() {
           const isOver = overallDiff < 0;
           return (
             <div
-              className={`bg-surface border rounded-xl2 shadow-card p-5 ${isOver ? "border-over/30" : "border-good/30"}`}
+              className={`bg-surface border rounded-xl2 shadow-card p-4 sm:p-5 ${isOver ? "border-over/30" : "border-good/30"}`}
             >
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
@@ -236,7 +236,7 @@ export default function Budget() {
         })()}
 
       {status?.income != null && (
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-5">
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
               Total Budgeted vs Income
@@ -264,8 +264,8 @@ export default function Budget() {
       )}
 
       {editing && (
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-5 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <p className="font-display font-semibold text-ink-900">
               Edit Categories
             </p>
@@ -368,40 +368,77 @@ export default function Budget() {
               <div key={cat.id}>
                 <button
                   onClick={() => toggleExpand(cat.id)}
-                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-black/[0.015] transition-colors"
+                  className="w-full text-left p-3 sm:p-4 hover:bg-black/[0.015] transition-colors"
                 >
-                  {expanded === cat.id ? (
-                    <ChevronDown size={16} className="text-ink-300 shrink-0" />
-                  ) : (
-                    <ChevronRight size={16} className="text-ink-300 shrink-0" />
-                  )}
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: cat.color }}
-                  />
-                  <span className="font-medium text-sm text-ink-900 w-36 shrink-0 truncate">
-                    {cat.name}
-                  </span>
-                  <div className="flex-1">
+                  {/* Mobile: stacked layout */}
+                  <div className="md:hidden">
+                    <div className="flex items-center gap-2 mb-2">
+                      {expanded === cat.id ? (
+                        <ChevronDown size={15} className="text-ink-300 shrink-0" />
+                      ) : (
+                        <ChevronRight size={15} className="text-ink-300 shrink-0" />
+                      )}
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      <span className="font-medium text-sm text-ink-900 truncate flex-1">
+                        {cat.name}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold tabular shrink-0 ${
+                          catIsOver ? "text-over" : "text-good"
+                        }`}
+                      >
+                        {signedCurrency(diff)}
+                      </span>
+                    </div>
                     <ProgressBar
                       percent={cat.percent}
                       status={cat.status}
                       color={cat.color}
                     />
+                    <div className="flex items-center justify-between mt-1.5 text-xs text-ink-500 tabular">
+                      <span>{currency(cat.spent)} spent</span>
+                      <span>of {currency(cat.monthly_target)}</span>
+                    </div>
                   </div>
-                  <span className="text-sm tabular text-ink-700 w-32 text-right shrink-0">
-                    {currency(cat.spent)}{" "}
-                    <span className="text-ink-300">
-                      / {currency(cat.monthly_target)}
+
+                  {/* Desktop: single row */}
+                  <div className="hidden md:flex items-center gap-4">
+                    {expanded === cat.id ? (
+                      <ChevronDown size={16} className="text-ink-300 shrink-0" />
+                    ) : (
+                      <ChevronRight size={16} className="text-ink-300 shrink-0" />
+                    )}
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                    <span className="font-medium text-sm text-ink-900 w-36 shrink-0 truncate">
+                      {cat.name}
                     </span>
-                  </span>
-                  <span
-                    className={`text-xs font-semibold tabular w-20 text-right shrink-0 ${
-                      catIsOver ? "text-over" : "text-good"
-                    }`}
-                  >
-                    {signedCurrency(diff)}
-                  </span>
+                    <div className="flex-1">
+                      <ProgressBar
+                        percent={cat.percent}
+                        status={cat.status}
+                        color={cat.color}
+                      />
+                    </div>
+                    <span className="text-sm tabular text-ink-700 w-32 text-right shrink-0">
+                      {currency(cat.spent)}{" "}
+                      <span className="text-ink-300">
+                        / {currency(cat.monthly_target)}
+                      </span>
+                    </span>
+                    <span
+                      className={`text-xs font-semibold tabular w-20 text-right shrink-0 ${
+                        catIsOver ? "text-over" : "text-good"
+                      }`}
+                    >
+                      {signedCurrency(diff)}
+                    </span>
+                  </div>
                 </button>
                 {expanded === cat.id && (
                   <div className="px-4 pb-4">
@@ -417,11 +454,13 @@ export default function Budget() {
             );
           })}
           {status?.uncategorized_spend > 0 && (
-            <div className="p-4 flex items-center gap-4 text-ink-500">
-              <span className="w-6" />
+            <div className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-4 text-ink-500">
+              <span className="hidden md:inline-block w-6" />
               <span className="w-2.5 h-2.5 rounded-full bg-ink-300 shrink-0" />
-              <span className="text-sm w-36">Uncategorized</span>
-              <div className="flex-1" />
+              <span className="text-sm flex-1 md:flex-none md:w-36 truncate">
+                Uncategorized
+              </span>
+              <div className="hidden md:block flex-1" />
               <span className="text-sm tabular">
                 {currency(status.uncategorized_spend)}
               </span>

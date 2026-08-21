@@ -75,7 +75,7 @@ export default function App() {
     <UploadModalProvider>
       <div className="min-h-screen">
         <NavBar onLogout={handleLogout} />
-        <main className="max-w-6xl mx-auto px-6 py-8">
+        <main className="max-w-6xl mx-auto px-4 py-5 sm:px-6 sm:py-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/accounts" element={<Accounts />} />

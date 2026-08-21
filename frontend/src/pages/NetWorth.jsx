@@ -11,7 +11,7 @@ const currency = (n) =>
 function AccountGroup({ title, accounts, total, tone }) {
   const maxBalance = Math.max(...accounts.map((a) => a.balance), 1);
   return (
-    <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+    <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">{title}</p>
         <span className={`text-sm font-semibold tabular ${tone}`}>{currency(total)}</span>
@@ -69,7 +69,7 @@ export default function NetWorth() {
   if (!hasAnyAccounts) {
     return (
       <div className="space-y-5">
-        <h1 className="font-display font-bold text-2xl text-ink-900">Net Worth</h1>
+        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Net Worth</h1>
         <div className="bg-surface border border-line rounded-xl2 shadow-card">
           <EmptyState
             icon={Landmark}
@@ -92,7 +92,7 @@ export default function NetWorth() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-2xl text-ink-900">Net Worth</h1>
+        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Net Worth</h1>
         <Link
           to="/accounts"
           className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-dark"
@@ -101,7 +101,7 @@ export default function NetWorth() {
         </Link>
       </div>
 
-      <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+      <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-1">
@@ -130,7 +130,7 @@ export default function NetWorth() {
       </div>
 
       {history.length > 1 && (
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
           <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-3">
             Net Worth Over Time
           </p>
@@ -143,7 +143,7 @@ export default function NetWorth() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         <AccountGroup
           title="Assets"
           accounts={data.assets.accounts}

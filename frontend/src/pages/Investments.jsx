@@ -106,7 +106,7 @@ export default function Investments() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-5">
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5">
           <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-1">
             Total Value
           </p>
@@ -114,7 +114,7 @@ export default function Investments() {
             {currency(summary.total_value)}
           </p>
         </div>
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-5">
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5">
           <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-1">
             Cost Basis
           </p>
@@ -122,7 +122,7 @@ export default function Investments() {
             {summary.total_cost_basis !== null ? currency(summary.total_cost_basis) : "—"}
           </p>
         </div>
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-5">
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-1">
               Unrealized Gain/Loss
@@ -151,7 +151,7 @@ export default function Investments() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
           <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-3">
             Allocation
           </p>
@@ -161,7 +161,7 @@ export default function Investments() {
             <p className="text-sm text-ink-500 py-8 text-center">No holdings synced yet.</p>
           )}
         </div>
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-6">
+        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
           <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-3">
             Value Over Time
           </p>
@@ -236,53 +236,34 @@ export default function Investments() {
           {isExpanded && (account.holdings.length === 0 ? (
             <p className="text-sm text-ink-500 p-4">No holdings synced yet.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse min-w-[640px]">
-                <thead>
-                  <tr className="border-b border-line">
-                    <th className="text-left font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-4">
-                      Security
-                    </th>
-                    <th className="text-left font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
-                      Type
-                    </th>
-                    <th className="text-right font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
-                      Quantity
-                    </th>
-                    <th className="text-right font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
-                      Price
-                    </th>
-                    <th className="text-right font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
-                      Value
-                    </th>
-                    <th className="text-right font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-4">
-                      Gain/Loss
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {account.holdings.map((h, i) => (
-                    <tr key={i} className="border-b border-line last:border-b-0">
-                      <td className="px-4 py-2.5 text-sm text-ink-900">
-                        <span className="font-medium">{h.ticker || h.name}</span>
+            <>
+              {/* Mobile: stacked cards */}
+              <div className="md:hidden divide-y divide-line">
+                {account.holdings.map((h, i) => (
+                  <div key={i} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-ink-900">
+                          {h.ticker || h.name}
+                        </p>
                         {h.ticker && (
-                          <span className="text-ink-500"> · {h.name}</span>
+                          <p className="text-xs text-ink-500 truncate">{h.name}</p>
                         )}
-                      </td>
-                      <td className="px-3 py-2.5 text-sm text-ink-500">
-                        {ALLOCATION_LABELS[h.type] || h.type}
-                      </td>
-                      <td className="px-3 py-2.5 text-sm text-right tabular text-ink-700">
-                        {h.quantity ?? "—"}
-                      </td>
-                      <td className="px-3 py-2.5 text-sm text-right tabular text-ink-700">
-                        {h.price !== null ? currency(h.price) : "—"}
-                      </td>
-                      <td className="px-3 py-2.5 text-sm text-right tabular font-medium text-ink-900">
+                      </div>
+                      <span className="text-sm font-medium tabular text-ink-900 shrink-0">
                         {currency(h.value)}
-                      </td>
-                      <td
-                        className={`px-4 py-2.5 text-sm text-right tabular font-medium ${
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-2 text-xs text-ink-500 tabular">
+                      <span>
+                        {ALLOCATION_LABELS[h.type] || h.type}
+                        {h.quantity !== null && h.quantity !== undefined
+                          ? ` · ${h.quantity} sh`
+                          : ""}
+                        {h.price !== null ? ` @ ${currency(h.price)}` : ""}
+                      </span>
+                      <span
+                        className={`font-medium ${
                           h.gain === null
                             ? "text-ink-500"
                             : h.gain >= 0
@@ -293,12 +274,77 @@ export default function Investments() {
                         {h.gain === null
                           ? "—"
                           : `${h.gain >= 0 ? "+" : ""}${currency(h.gain)} (${h.gain_pct >= 0 ? "+" : ""}${h.gain_pct}%)`}
-                      </td>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop / tablet: full table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse min-w-[640px]">
+                  <thead>
+                    <tr className="border-b border-line">
+                      <th className="text-left font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-4">
+                        Security
+                      </th>
+                      <th className="text-left font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
+                        Type
+                      </th>
+                      <th className="text-right font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
+                        Quantity
+                      </th>
+                      <th className="text-right font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
+                        Price
+                      </th>
+                      <th className="text-right font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
+                        Value
+                      </th>
+                      <th className="text-right font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-4">
+                        Gain/Loss
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {account.holdings.map((h, i) => (
+                      <tr key={i} className="border-b border-line last:border-b-0">
+                        <td className="px-4 py-2.5 text-sm text-ink-900">
+                          <span className="font-medium">{h.ticker || h.name}</span>
+                          {h.ticker && (
+                            <span className="text-ink-500"> · {h.name}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5 text-sm text-ink-500">
+                          {ALLOCATION_LABELS[h.type] || h.type}
+                        </td>
+                        <td className="px-3 py-2.5 text-sm text-right tabular text-ink-700">
+                          {h.quantity ?? "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-sm text-right tabular text-ink-700">
+                          {h.price !== null ? currency(h.price) : "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-sm text-right tabular font-medium text-ink-900">
+                          {currency(h.value)}
+                        </td>
+                        <td
+                          className={`px-4 py-2.5 text-sm text-right tabular font-medium ${
+                            h.gain === null
+                              ? "text-ink-500"
+                              : h.gain >= 0
+                                ? "text-good"
+                                : "text-over"
+                          }`}
+                        >
+                          {h.gain === null
+                            ? "—"
+                            : `${h.gain >= 0 ? "+" : ""}${currency(h.gain)} (${h.gain_pct >= 0 ? "+" : ""}${h.gain_pct}%)`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ))}
         </div>
         );

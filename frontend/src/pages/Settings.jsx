@@ -77,9 +77,9 @@ export default function Settings() {
 
   return (
     <div className="space-y-5 max-w-2xl">
-      <h1 className="font-display font-bold text-2xl text-ink-900">Settings</h1>
+      <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Settings</h1>
 
-      <section className="bg-surface border border-line rounded-xl2 shadow-card p-6 space-y-4">
+      <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-4">
         <p className="font-display font-semibold text-ink-900 flex items-center gap-2">
           <FolderOpen size={16} className="text-accent" /> Data & Format
         </p>
@@ -105,7 +105,7 @@ export default function Settings() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-ink-500 uppercase tracking-wide mb-1.5">
               Currency
@@ -133,7 +133,7 @@ export default function Settings() {
         </div>
       </section>
 
-      <section className="bg-surface border border-line rounded-xl2 shadow-card p-6 space-y-4">
+      <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-4">
         <p className="font-display font-semibold text-ink-900">
           Credit Card CSV Mapping
         </p>
@@ -141,7 +141,7 @@ export default function Settings() {
           Match the header names your credit card's CSV export uses, so uploads
           parse correctly.
         </p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {["date", "amount", "description"].map((field) => (
             <div key={field}>
               <label className="block text-xs font-medium text-ink-500 uppercase tracking-wide mb-1.5 capitalize">
@@ -165,7 +165,7 @@ export default function Settings() {
         </div>
       </section>
 
-      <section className="bg-surface border border-line rounded-xl2 shadow-card p-6 space-y-4">
+      <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-4">
         <p className="font-display font-semibold text-ink-900">
           Checking Account CSV Mapping
         </p>
@@ -175,7 +175,7 @@ export default function Settings() {
           (deposits, paychecks) are always ignored on import for both account
           types.
         </p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {["date", "amount", "description"].map((field) => (
             <div key={field}>
               <label className="block text-xs font-medium text-ink-500 uppercase tracking-wide mb-1.5 capitalize">
@@ -199,7 +199,7 @@ export default function Settings() {
         </div>
       </section>
 
-      <section className="bg-surface border border-line rounded-xl2 shadow-card p-6 space-y-3">
+      <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-3">
         <p className="font-display font-semibold text-ink-900 flex items-center gap-2">
           <PiggyBank size={16} className="text-accent" /> Category Management
         </p>
@@ -230,7 +230,7 @@ export default function Settings() {
         </button>
       </div>
 
-      <section className="bg-surface border border-line rounded-xl2 shadow-card p-6 space-y-3">
+      <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-3">
         <p className="font-display font-semibold text-ink-900">
           Backup & Export
         </p>
@@ -265,7 +265,7 @@ export default function Settings() {
         )}
       </section>
 
-      <section className="bg-over/5 border border-over/30 rounded-xl2 p-6 space-y-3">
+      <section className="bg-over/5 border border-over/30 rounded-xl2 p-4 sm:p-6 space-y-3">
         <p className="font-display font-semibold text-over flex items-center gap-2">
           <AlertTriangle size={16} /> Danger Zone
         </p>

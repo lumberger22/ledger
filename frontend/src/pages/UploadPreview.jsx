@@ -145,7 +145,7 @@ export default function UploadPreview() {
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink-900">
+          <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
             {plaidMode ? "Review Connected Account Transactions" : "Review Upload"}
           </h1>
           <p className="text-sm text-ink-500 mt-0.5">
@@ -181,9 +181,9 @@ export default function UploadPreview() {
           return (
             <div
               key={item.id}
-              className={`p-4 flex flex-wrap items-center gap-3 ${flagged ? "bg-over/5" : ""}`}
+              className={`p-3 sm:p-4 flex flex-wrap items-center gap-2.5 sm:gap-3 ${flagged ? "bg-over/5" : ""}`}
             >
-              <div className="w-24 shrink-0 text-sm text-ink-500 tabular">
+              <div className="w-20 sm:w-24 shrink-0 text-sm text-ink-500 tabular">
                 {item.date}
               </div>
               <div className="flex-1 min-w-[160px]">
@@ -238,7 +238,7 @@ export default function UploadPreview() {
                       });
                     }
                   }}
-                  className={`text-sm rounded-md border px-2.5 py-1.5 w-44 ${
+                  className={`text-sm rounded-md border px-2.5 py-1.5 flex-1 sm:flex-none min-w-[140px] sm:w-44 ${
                     flagged
                       ? "border-over"
                       : item.category_id

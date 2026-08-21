@@ -119,7 +119,7 @@ export default function Charges() {
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink-900">
+          <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
             Charges
           </h1>
           <p className="text-sm text-ink-500 mt-0.5 tabular">
@@ -140,7 +140,7 @@ export default function Charges() {
       {plaidPendingCount > 0 && (
         <Link
           to="/upload-preview?source=plaid"
-          className="flex items-center justify-between gap-3 bg-accent-light/50 border border-accent/30 rounded-xl2 p-4 text-sm hover:bg-accent-light transition-colors"
+          className="flex items-center justify-between gap-3 bg-accent-light/50 border border-accent/30 rounded-xl2 p-3 sm:p-4 text-sm hover:bg-accent-light transition-colors"
         >
           <span className="flex items-center gap-2 text-ink-900">
             <Landmark size={15} className="text-accent-dark shrink-0" />
@@ -161,7 +161,7 @@ export default function Charges() {
       {showAddForm && (
         <form
           onSubmit={handleAddSubmit}
-          className="bg-surface border border-line rounded-xl2 shadow-card p-5 grid grid-cols-2 md:grid-cols-6 gap-3"
+          className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5 grid grid-cols-2 md:grid-cols-6 gap-3"
         >
           <input
             type="date"
@@ -234,8 +234,8 @@ export default function Charges() {
         </form>
       )}
 
-      <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 flex flex-wrap items-center gap-2.5">
-        <div className="relative">
+      <div className="bg-surface border border-line rounded-xl2 shadow-card p-3 sm:p-4 flex flex-wrap items-center gap-2.5">
+        <div className="relative w-full sm:w-auto">
           <Search
             size={14}
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-300"
@@ -244,21 +244,21 @@ export default function Charges() {
             placeholder="Search source or nickname…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="text-sm rounded-lg border border-line pl-8 pr-3 py-1.5 w-56"
+            className="text-sm rounded-lg border border-line pl-8 pr-3 py-1.5 w-full sm:w-56"
           />
         </div>
         <input
           type="date"
           value={start}
           onChange={(e) => setStart(e.target.value)}
-          className="text-sm rounded-lg border border-line px-2.5 py-1.5"
+          className="text-sm rounded-lg border border-line px-2.5 py-1.5 flex-1 sm:flex-none min-w-0"
         />
-        <span className="text-ink-300 text-sm">–</span>
+        <span className="text-ink-300 text-sm hidden sm:inline">–</span>
         <input
           type="date"
           value={end}
           onChange={(e) => setEnd(e.target.value)}
-          className="text-sm rounded-lg border border-line px-2.5 py-1.5"
+          className="text-sm rounded-lg border border-line px-2.5 py-1.5 flex-1 sm:flex-none min-w-0"
         />
 
         <div className="flex items-center gap-1 flex-wrap">

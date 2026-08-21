@@ -184,12 +184,12 @@ export default function Accounts() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-2xl text-ink-900">Accounts</h1>
-        <div className="flex items-center gap-2">
+        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Accounts</h1>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           {plaidPendingCount > 0 && (
             <Link
               to="/upload-preview?source=plaid"
-              className="flex items-center gap-1.5 text-sm font-semibold text-accent-dark bg-accent-light hover:bg-accent-light/70 px-3 py-1.5 rounded-lg transition-colors"
+              className="flex items-center justify-center gap-1.5 text-sm font-semibold text-accent-dark bg-accent-light hover:bg-accent-light/70 px-3 py-1.5 rounded-lg transition-colors"
             >
               {plaidPendingCount} to review
             </Link>
@@ -198,7 +198,7 @@ export default function Accounts() {
             <button
               onClick={() => handleSync()}
               disabled={syncing}
-              className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 disabled:opacity-60 px-3 py-1.5 rounded-lg"
+              className="flex items-center justify-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 disabled:opacity-60 px-3 py-1.5 rounded-lg"
             >
               <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
               {syncing ? "Syncing…" : "Sync Now"}
@@ -206,14 +206,14 @@ export default function Accounts() {
           )}
           <button
             onClick={() => setShowManualForm((v) => !v)}
-            className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 px-3 py-1.5 rounded-lg"
+            className="flex items-center justify-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 px-3 py-1.5 rounded-lg"
           >
             <Plus size={14} /> Manual Account
           </button>
           <button
             onClick={() => handleConnect()}
             disabled={connecting}
-            className="flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors shadow-card disabled:opacity-60"
+            className="flex items-center justify-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors shadow-card disabled:opacity-60"
           >
             <Landmark size={15} /> {connecting ? "Connecting…" : "Connect Account"}
           </button>
@@ -229,9 +229,9 @@ export default function Accounts() {
       {showManualForm && (
         <form
           onSubmit={handleAddManual}
-          className="bg-surface border border-line rounded-xl2 shadow-card p-5 flex items-end gap-3 flex-wrap"
+          className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5 flex flex-wrap items-end gap-3"
         >
-          <div>
+          <div className="w-full sm:w-auto">
             <label className="block text-xs font-medium text-ink-500 uppercase tracking-wide mb-1.5">
               Name
             </label>
@@ -240,17 +240,17 @@ export default function Accounts() {
               value={manualDraft.name}
               onChange={(e) => setManualDraft({ ...manualDraft, name: e.target.value })}
               placeholder="Cash, Venmo, …"
-              className="text-sm rounded-lg border border-line px-3 py-2 w-48"
+              className="text-sm rounded-lg border border-line px-3 py-2 w-full sm:w-48"
             />
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <label className="block text-xs font-medium text-ink-500 uppercase tracking-wide mb-1.5">
               Type
             </label>
             <select
               value={manualDraft.type}
               onChange={(e) => setManualDraft({ ...manualDraft, type: e.target.value })}
-              className="text-sm rounded-lg border border-line px-3 py-2"
+              className="text-sm rounded-lg border border-line px-3 py-2 w-full sm:w-auto"
             >
               {ACCOUNT_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -259,7 +259,7 @@ export default function Accounts() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <label className="block text-xs font-medium text-ink-500 uppercase tracking-wide mb-1.5">
               Balance
             </label>
@@ -270,22 +270,24 @@ export default function Accounts() {
               onChange={(e) =>
                 setManualDraft({ ...manualDraft, current_balance: e.target.value })
               }
-              className="text-sm rounded-lg border border-line px-3 py-2 w-32 tabular"
+              className="text-sm rounded-lg border border-line px-3 py-2 w-full sm:w-32 tabular"
             />
           </div>
-          <button
-            type="submit"
-            className="flex items-center gap-1 text-sm font-semibold text-white bg-accent hover:bg-accent-dark px-3.5 py-2 rounded-lg"
-          >
-            <Check size={14} /> Add
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowManualForm(false)}
-            className="flex items-center gap-1 text-sm font-medium text-ink-500 px-3 py-2 rounded-lg hover:bg-black/5"
-          >
-            <X size={14} /> Cancel
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="submit"
+              className="flex items-center justify-center gap-1 text-sm font-semibold text-white bg-accent hover:bg-accent-dark px-3.5 py-2 rounded-lg flex-1 sm:flex-none"
+            >
+              <Check size={14} /> Add
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowManualForm(false)}
+              className="flex items-center justify-center gap-1 text-sm font-medium text-ink-500 px-3 py-2 rounded-lg hover:bg-black/5 flex-1 sm:flex-none"
+            >
+              <X size={14} /> Cancel
+            </button>
+          </div>
         </form>
       )}
 
@@ -324,14 +326,14 @@ export default function Accounts() {
                     }
                   }}
                   aria-expanded={isExpanded}
-                  className={`w-full flex items-center justify-between p-4 text-left cursor-pointer hover:bg-black/[0.015] transition-colors ${isExpanded ? "border-b border-line" : ""}`}
+                  className={`w-full flex items-center justify-between gap-2 p-3 sm:p-4 text-left cursor-pointer hover:bg-black/[0.015] transition-colors ${isExpanded ? "border-b border-line" : ""}`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-full bg-accent-light flex items-center justify-center shrink-0">
                       <Landmark size={16} className="text-accent-dark" />
                     </div>
-                    <div>
-                      <p className="font-display font-semibold text-ink-900">
+                    <div className="min-w-0">
+                      <p className="font-display font-semibold text-ink-900 truncate">
                         {item.institution_name || "Connected institution"}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -382,7 +384,7 @@ export default function Accounts() {
                       <p className="text-sm text-ink-500 p-4">No accounts synced yet.</p>
                     ) : (
                       item.accounts.map((a) => (
-                        <div key={a.id} className="flex items-center justify-between p-4">
+                        <div key={a.id} className="flex items-center justify-between gap-2 p-3 sm:p-4">
                           <div>
                             <p className="text-sm font-medium text-ink-900">{a.name}</p>
                             <p className="text-xs text-ink-500">

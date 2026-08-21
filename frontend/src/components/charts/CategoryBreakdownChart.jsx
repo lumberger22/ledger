@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -16,7 +17,24 @@ const FALLBACK_COLORS = [
   "#A8B0AA",
 ];
 
+// Below this width the donut + right-side legend get too cramped to read,
+// so the legend moves under the chart instead. Desktop layout/props are
+// untouched above this breakpoint.
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 640,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const onChange = (e) => setIsMobile(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return isMobile;
+}
+
 export default function CategoryBreakdownChart({ data, currency = "USD" }) {
+  const isMobile = useIsMobile();
   if (!data?.length) return null;
 
   const chartData = data.map((d, i) => ({
@@ -26,14 +44,14 @@ export default function CategoryBreakdownChart({ data, currency = "USD" }) {
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height={isMobile ? 320 : 260}>
       <PieChart>
         <Pie
           data={chartData}
           dataKey="value"
           nameKey="name"
-          innerRadius={62}
-          outerRadius={90}
+          innerRadius={isMobile ? 52 : 62}
+          outerRadius={isMobile ? 76 : 90}
           paddingAngle={2}
           strokeWidth={0}
         >
@@ -53,9 +71,9 @@ export default function CategoryBreakdownChart({ data, currency = "USD" }) {
           }}
         />
         <Legend
-          verticalAlign="middle"
-          align="right"
-          layout="vertical"
+          verticalAlign={isMobile ? "bottom" : "middle"}
+          align={isMobile ? "center" : "right"}
+          layout={isMobile ? "horizontal" : "vertical"}
           iconType="circle"
           iconSize={8}
           wrapperStyle={{

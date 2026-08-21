@@ -88,7 +88,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-2xl text-ink-900">
+        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
           Dashboard
         </h1>
         <PeriodFilter value={period} onChange={setPeriod} />
@@ -97,7 +97,7 @@ export default function Dashboard() {
       {netWorth && netWorth.assets.accounts.length + netWorth.liabilities.accounts.length > 0 && (
         <Link
           to="/net-worth"
-          className="flex items-center justify-between bg-surface border border-line rounded-xl2 shadow-card px-6 py-4 hover:border-accent/30 transition-colors"
+          className="flex items-center justify-between bg-surface border border-line rounded-xl2 shadow-card px-4 py-3 sm:px-6 sm:py-4 hover:border-accent/30 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div
@@ -124,13 +124,13 @@ export default function Dashboard() {
         </Link>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Budget summary card */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="lg:col-span-2 bg-surface border border-line rounded-xl2 shadow-card p-6"
+          className="lg:col-span-2 bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6"
         >
           <div className="flex items-start justify-between mb-5">
             <div>
@@ -179,7 +179,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          className="bg-surface border border-line rounded-xl2 shadow-card p-6"
+          className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6"
         >
           <div className="flex items-start justify-between mb-4">
             <div>
@@ -220,7 +220,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          className="bg-surface border border-line rounded-xl2 shadow-card p-6 flex flex-col justify-between"
+          className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 flex flex-col justify-between"
         >
           <div>
             <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-3">
@@ -244,13 +244,13 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {/* Category breakdown */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="bg-surface border border-line rounded-xl2 shadow-card p-6"
+          className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6"
         >
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
@@ -300,7 +300,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.15 }}
-          className="bg-surface border border-line rounded-xl2 shadow-card p-6"
+          className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6"
         >
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">

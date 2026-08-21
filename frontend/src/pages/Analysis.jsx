@@ -421,7 +421,7 @@ function BudgetStreakCard({ history }) {
 function AnalysisCard({ children, className = "", title, icon: Icon }) {
   return (
     <section
-      className={`bg-surface border border-line rounded-xl2 shadow-card p-6 ${className}`}
+      className={`bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 ${className}`}
     >
       {title && (
         <div className="flex items-center gap-1.5 mb-4">
@@ -712,7 +712,7 @@ function AnalysisContent({ data, totalMomPct }) {
     <div className="space-y-5">
       <PeriodComparisonCard data={data} totalMomPct={totalMomPct} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
         {/* Left side */}
         <CategoryBreakdownCard data={data} className="lg:col-span-2" />
 
@@ -723,7 +723,7 @@ function AnalysisContent({ data, totalMomPct }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         <TopSpendingSourcesCard
           data={data}
           showAllSources={showAllSources}
@@ -732,7 +732,7 @@ function AnalysisContent({ data, totalMomPct }) {
         <BiggestChargesSection data={data} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
         {/* Left side */}
         <PaceProjectionCard data={data} className="lg:col-span-2" />
 
@@ -789,7 +789,7 @@ export default function Analysis() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-2xl text-ink-900">
+        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
           Analysis
         </h1>
         <PeriodFilter

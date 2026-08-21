@@ -35,11 +35,11 @@ export default function PaystubUploadModal({ isOpen, onClose, onParsed }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 overflow-y-auto"
       onClick={resetAndClose}
     >
       <div
-        className="bg-surface rounded-xl2 shadow-cardHover w-full max-w-lg p-6"
+        className="bg-surface rounded-xl2 shadow-cardHover w-full max-w-lg p-4 sm:p-6 my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-1">
