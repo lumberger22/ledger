@@ -10,20 +10,26 @@ class ApiError extends Error {
   }
 }
 
+// localStorage (not sessionStorage) so the key survives app restarts —
+// needed for Face ID quick-unlock (see api/webauthn.js) to be worth
+// anything: otherwise you'd still have to retype the password every cold
+// start regardless of Face ID. Face ID is a local gate in front of this
+// stored value, not a replacement for it — see the Settings page and
+// api/webauthn.js for that tradeoff.
 export function getStoredApiKey() {
-  return sessionStorage.getItem(API_KEY_STORAGE) || "";
+  return localStorage.getItem(API_KEY_STORAGE) || "";
 }
 
 export function setStoredApiKey(key) {
   if (key) {
-    sessionStorage.setItem(API_KEY_STORAGE, key);
+    localStorage.setItem(API_KEY_STORAGE, key);
   } else {
-    sessionStorage.removeItem(API_KEY_STORAGE);
+    localStorage.removeItem(API_KEY_STORAGE);
   }
 }
 
 export function clearStoredApiKey() {
-  sessionStorage.removeItem(API_KEY_STORAGE);
+  localStorage.removeItem(API_KEY_STORAGE);
 }
 
 function authHeaders(extra = {}) {

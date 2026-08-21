@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { ScanFace } from "lucide-react";
 import { api, setStoredApiKey } from "../api/client";
+import { isFaceIdAvailable, isFaceIdEnabled, registerFaceId } from "../api/webauthn";
+import Logo from "../components/Logo";
 
 export default function Login({ onSuccess }) {
   const [apiKey, setApiKey] = useState("");
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
+  const [offerFaceId, setOfferFaceId] = useState(false);
+  const [enabling, setEnabling] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -18,7 +22,11 @@ export default function Login({ onSuccess }) {
       await api.get("/api/health");
       // Health is public; verify the key against a protected route.
       await api.get("/api/settings");
-      onSuccess();
+      if (!isFaceIdEnabled() && (await isFaceIdAvailable())) {
+        setOfferFaceId(true);
+      } else {
+        onSuccess();
+      }
     } catch (err) {
       setStoredApiKey("");
       setError(
@@ -31,15 +39,62 @@ export default function Login({ onSuccess }) {
     }
   }
 
+  async function handleEnableFaceId() {
+    setEnabling(true);
+    try {
+      await registerFaceId();
+    } catch {
+      // Optional step — if setup fails or is cancelled, just continue into
+      // the app with password-only unlock. Settings has this toggle too.
+    } finally {
+      setEnabling(false);
+      onSuccess();
+    }
+  }
+
+  if (offerFaceId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="w-full max-w-sm bg-surface border border-line rounded-xl2 shadow-card p-8 space-y-5 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent-light text-accent mx-auto">
+            <ScanFace size={22} />
+          </div>
+          <div>
+            <h1 className="font-display font-bold text-xl text-ink-900">
+              Enable Face ID?
+            </h1>
+            <p className="text-sm text-ink-500 mt-1">
+              Unlock Ledger with Face ID instead of typing your password every
+              time. You can turn this off anytime in Settings.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <button
+              onClick={handleEnableFaceId}
+              disabled={enabling}
+              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-60 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+            >
+              {enabling ? "Setting up…" : "Enable Face ID"}
+            </button>
+            <button
+              onClick={onSuccess}
+              className="w-full text-sm font-medium text-ink-500 hover:text-ink-900 px-4 py-2 rounded-lg"
+            >
+              Not Now
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm bg-surface border border-line rounded-xl2 shadow-card p-8 space-y-5">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent-light text-accent">
-            <Lock size={22} />
-          </div>
+          <Logo size={64} className="mx-auto" />
           <h1 className="font-display font-bold text-xl text-ink-900">
-            Ledger App
+            Ledger Financial
           </h1>
           <p className="text-sm text-ink-500">
             Enter your password to continue.

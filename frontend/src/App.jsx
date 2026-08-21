@@ -13,16 +13,21 @@ import Accounts from "./pages/Accounts";
 import Investments from "./pages/Investments";
 import NetWorth from "./pages/NetWorth";
 import Login from "./pages/Login";
+import FaceIdGate from "./components/FaceIdGate";
 import { api, clearStoredApiKey, getStoredApiKey } from "./api/client";
+import { isFaceIdEnabled } from "./api/webauthn";
 
 export default function App() {
-  const [authState, setAuthState] = useState("checking"); // 'checking' | 'locked' | 'unlocked'
+  // 'checking' | 'locked' | 'faceid-gate' | 'unlocked'
+  const [authState, setAuthState] = useState("checking");
 
   useEffect(() => {
     async function checkAuth() {
       const key = getStoredApiKey();
       if (!key) {
         // No stored key — probe whether the server requires auth at all.
+        // (No password stored means no Face ID gate either — there'd be
+        // nothing for it to protect.)
         try {
           await api.get("/api/settings");
           setAuthState("unlocked");
@@ -34,7 +39,7 @@ export default function App() {
 
       try {
         await api.get("/api/settings");
-        setAuthState("unlocked");
+        setAuthState(isFaceIdEnabled() ? "faceid-gate" : "unlocked");
       } catch {
         setAuthState("locked");
       }
@@ -50,6 +55,19 @@ export default function App() {
       window.removeEventListener("budget-app-unauthorized", onUnauthorized);
   }, []);
 
+  // Re-lock behind Face ID whenever the app is brought back to the
+  // foreground (tab/app switch, screen lock, etc.) — this is what makes it
+  // feel like an actual app lock rather than a one-time login gate.
+  useEffect(() => {
+    function onVisibility() {
+      if (document.visibilityState === "visible" && isFaceIdEnabled()) {
+        setAuthState((current) => (current === "unlocked" ? "faceid-gate" : current));
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
   useEffect(() => {
     if (authState === "unlocked") {
       window.scrollTo(0, 0);
@@ -58,6 +76,14 @@ export default function App() {
 
   function handleLoginSuccess() {
     setAuthState("unlocked");
+  }
+
+  function handleFaceIdSuccess() {
+    setAuthState("unlocked");
+  }
+
+  function handleUsePassword() {
+    setAuthState("locked");
   }
 
   function handleLogout() {
@@ -75,6 +101,15 @@ export default function App() {
 
   if (authState === "locked") {
     return <Login onSuccess={handleLoginSuccess} />;
+  }
+
+  if (authState === "faceid-gate") {
+    return (
+      <FaceIdGate
+        onSuccess={handleFaceIdSuccess}
+        onUsePassword={handleUsePassword}
+      />
+    );
   }
 
   return (

@@ -6,6 +6,7 @@ import {
   Check,
   FolderOpen,
   PiggyBank,
+  ScanFace,
 } from "lucide-react";
 import {
   getSettings,
@@ -15,6 +16,12 @@ import {
   resetAllData,
 } from "../api/settings";
 import { getBudget, updateBudget } from "../api/budget";
+import {
+  isFaceIdAvailable,
+  isFaceIdEnabled,
+  registerFaceId,
+  disableFaceId,
+} from "../api/webauthn";
 import { Link } from "react-router-dom";
 
 export default function Settings() {
@@ -26,6 +33,10 @@ export default function Settings() {
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [faceIdAvailable, setFaceIdAvailable] = useState(false);
+  const [faceIdOn, setFaceIdOn] = useState(isFaceIdEnabled());
+  const [faceIdBusy, setFaceIdBusy] = useState(false);
+  const [faceIdError, setFaceIdError] = useState("");
 
   useEffect(() => {
     Promise.all([getSettings(), getBudget()])
@@ -35,6 +46,28 @@ export default function Settings() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    isFaceIdAvailable().then(setFaceIdAvailable);
+  }, []);
+
+  async function handleToggleFaceId() {
+    setFaceIdError("");
+    if (faceIdOn) {
+      disableFaceId();
+      setFaceIdOn(false);
+      return;
+    }
+    setFaceIdBusy(true);
+    try {
+      await registerFaceId();
+      setFaceIdOn(true);
+    } catch {
+      setFaceIdError("Couldn't set up Face ID — try again.");
+    } finally {
+      setFaceIdBusy(false);
+    }
+  }
 
   async function handleSave() {
     await updateSettings(settings);
@@ -78,6 +111,37 @@ export default function Settings() {
   return (
     <div className="space-y-5 max-w-2xl">
       <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Settings</h1>
+
+      {faceIdAvailable && (
+        <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-3">
+          <p className="font-display font-semibold text-ink-900 flex items-center gap-2">
+            <ScanFace size={16} className="text-accent" /> Face ID Quick Unlock
+          </p>
+          <p className="text-sm text-ink-500">
+            Unlock Ledger with Face ID (or Touch ID / Windows Hello, depending
+            on the device) instead of typing your password every time you
+            open the app. This is a local convenience gate — your password
+            still lives on this device either way; Face ID just controls
+            when the app is allowed to use it.
+          </p>
+          <button
+            onClick={handleToggleFaceId}
+            disabled={faceIdBusy}
+            className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors disabled:opacity-60 ${
+              faceIdOn
+                ? "text-over border border-over/30 hover:bg-over/10"
+                : "text-accent border border-accent/30 hover:bg-accent-light"
+            }`}
+          >
+            {faceIdBusy
+              ? "Working…"
+              : faceIdOn
+                ? "Turn Off Face ID Unlock"
+                : "Enable Face ID Unlock"}
+          </button>
+          {faceIdError && <p className="text-sm text-over">{faceIdError}</p>}
+        </section>
+      )}
 
       <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-4">
         <p className="font-display font-semibold text-ink-900 flex items-center gap-2">
