@@ -57,6 +57,16 @@ PLAID_TOKEN_ENCRYPTION_KEY: str | None = os.getenv("PLAID_TOKEN_ENCRYPTION_KEY")
 # Public HTTPS URL Plaid should POST webhooks to, e.g. https://lucasledger.uk/api/plaid/webhook.
 # Optional in sandbox; without it you rely on scheduled/manual sync instead of push updates.
 PLAID_WEBHOOK_URL: str | None = os.getenv("PLAID_WEBHOOK_URL") or None
+# OAuth redirect URI — required for OAuth institutions (Wells Fargo, Chase,
+# and most large banks) to work reliably on mobile/mobile-web/installed PWAs.
+# Must exactly match (protocol, host, path — no query string) an entry in
+# the Plaid Dashboard's "Allowed redirect URIs" list for the current
+# environment (Sandbox vs Production have separate lists there). Ledger
+# reuses its own Accounts page as the landing target, e.g.
+# https://lucasledger.uk/accounts — see README's OAuth section. Optional:
+# without it, OAuth still works via popup on desktop browsers, but is
+# unreliable or broken inside an installed home-screen web app on iOS.
+PLAID_REDIRECT_URI: str | None = os.getenv("PLAID_REDIRECT_URI") or None
 # How often the background scheduler refreshes all connected items, in minutes.
 PLAID_SYNC_INTERVAL_MINUTES: int = int(os.getenv("PLAID_SYNC_INTERVAL_MINUTES", "180"))
 

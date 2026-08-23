@@ -35,6 +35,7 @@ from config import (
     PLAID_CLIENT_ID,
     PLAID_CONFIGURED,
     PLAID_ENV,
+    PLAID_REDIRECT_URI,
     PLAID_SECRET,
     PLAID_WEBHOOK_URL,
 )
@@ -85,6 +86,13 @@ def create_link_token(update_item_access_token: Optional[str] = None) -> dict:
     )
     if PLAID_WEBHOOK_URL:
         kwargs["webhook"] = PLAID_WEBHOOK_URL
+    if PLAID_REDIRECT_URI:
+        # Required for OAuth institutions (Wells Fargo and most large banks)
+        # to reliably return control to the app — see PLAID_REDIRECT_URI's
+        # comment in config.py. Applies to both a fresh Link session and an
+        # update-mode reconnect below; OAuth institutions can require the
+        # bank-login handoff again on reconnect too.
+        kwargs["redirect_uri"] = PLAID_REDIRECT_URI
 
     if update_item_access_token:
         kwargs["access_token"] = update_item_access_token

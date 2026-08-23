@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePlaidLink } from "react-plaid-link";
 import {
@@ -47,6 +47,15 @@ const STATUS_COPY = {
 
 const ACCOUNT_TYPES = ["depository", "credit", "investment", "loan"];
 
+// Persists the in-flight link_token across the full-page redirect an OAuth
+// institution (Wells Fargo, most large banks) sends the browser through —
+// popups mostly don't work inside an installed home-screen web app on iOS,
+// so that redirect replaces this page rather than opening a new window.
+// Plaid's own Link SDK example uses localStorage for exactly this reason:
+// it has to survive that navigation. See PLAID_REDIRECT_URI in the backend
+// config for the other half of this.
+const PLAID_OAUTH_LINK_TOKEN_KEY = "plaid_oauth_link_token";
+
 export default function Accounts() {
   const [items, setItems] = useState([]);
   const [manualAccounts, setManualAccounts] = useState([]);
@@ -56,6 +65,10 @@ export default function Accounts() {
   const [error, setError] = useState(null);
   const [linkToken, setLinkToken] = useState(null);
   const [pendingOpen, setPendingOpen] = useState(false);
+  // Set only while resuming an OAuth institution's Link session after the
+  // bank redirects back here (see the mount effect below) — never during a
+  // normal, same-session connect.
+  const oauthRedirectUriRef = useRef(null);
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualDraft, setManualDraft] = useState({
     name: "",
@@ -96,8 +109,19 @@ export default function Accounts() {
     setExpanded((prev) => ({ ...prev, [itemId]: prev[itemId] === false }));
   }
 
+  function cleanUpOAuthResume() {
+    if (!oauthRedirectUriRef.current) return;
+    oauthRedirectUriRef.current = null;
+    localStorage.removeItem(PLAID_OAUTH_LINK_TOKEN_KEY);
+    window.history.replaceState(null, "", window.location.pathname);
+  }
+
   const { open, ready } = usePlaidLink({
     token: linkToken,
+    // Only meaningful (and only set) when resuming after an OAuth
+    // institution's redirect back to this page — see the mount effect
+    // below. Plaid's SDK ignores this otherwise.
+    receivedRedirectUri: oauthRedirectUriRef.current || undefined,
     onSuccess: async (publicToken, metadata) => {
       try {
         await exchangePublicToken(
@@ -111,11 +135,23 @@ export default function Accounts() {
       } finally {
         setConnecting(false);
         setLinkToken(null);
+        cleanUpOAuthResume();
       }
     },
-    onExit: () => {
+    onExit: (err) => {
       setConnecting(false);
       setLinkToken(null);
+      if (err) {
+        // Institution-specific OAuth failures (pending approval, a required
+        // security questionnaire, etc.) surface here rather than as a
+        // silent dead end — see Plaid's OAuth guide for what these can be.
+        setError(
+          err.display_message ||
+            err.error_message ||
+            "Couldn't finish connecting that account.",
+        );
+      }
+      cleanUpOAuthResume();
     },
   });
 
@@ -126,11 +162,39 @@ export default function Accounts() {
     }
   }, [linkToken, ready, pendingOpen, open]);
 
+  // Resume an OAuth institution's Link session after its bank redirects the
+  // browser back here. Plaid appends `oauth_state_id` to whatever
+  // redirect_uri is registered (PLAID_REDIRECT_URI on the backend, which
+  // Ledger points at this same Accounts page) — this only ever needs to run
+  // once, right on mount, before anything else touches linkToken.
+  useEffect(() => {
+    if (!window.location.search.includes("oauth_state_id")) return;
+
+    const storedToken = localStorage.getItem(PLAID_OAUTH_LINK_TOKEN_KEY);
+    if (!storedToken) {
+      setError(
+        "That bank connection session expired, or was opened in a different browser — try connecting again.",
+      );
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
+
+    oauthRedirectUriRef.current = window.location.href;
+    setError(null);
+    setConnecting(true);
+    setLinkToken(storedToken);
+    setPendingOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleConnect(itemId) {
     setError(null);
     setConnecting(true);
     try {
       const { link_token } = await createLinkToken(itemId);
+      // Must be persisted before open() — an OAuth institution can navigate
+      // this whole page away to the bank's login before returning.
+      localStorage.setItem(PLAID_OAUTH_LINK_TOKEN_KEY, link_token);
       setLinkToken(link_token);
       setPendingOpen(true);
     } catch (err) {
