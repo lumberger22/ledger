@@ -10,6 +10,7 @@ unchanged. See PLAID_INTEGRATION_PLAN.md §4 for the reasoning.
 """
 
 import json
+import re
 import sqlite3
 from datetime import datetime, timezone
 from typing import Optional
@@ -26,6 +27,31 @@ from services.crypto import decrypt_token
 # spend as a negative `amount` and, like CSV upload, only tracks spend — so
 # we flip the sign and skip inflows, exactly mirroring the existing
 # "positive amounts are always ignored on import" CSV behavior.
+
+_REPLACEMENT_RUN_RE = re.compile("�+")
+_MULTI_SPACE_RE = re.compile(r"\s{2,}")
+
+
+def _clean_plaid_text(value: Optional[str]) -> Optional[str]:
+    """
+    Strip stray Unicode replacement characters (U+FFFD, the '�' glyph) out of
+    text Plaid hands back. Some institutions -- Wells Fargo in particular --
+    send account/card names containing a character that doesn't survive
+    intact by the time it reaches Plaid's API: e.g. the (R) in "Active Cash(R)
+    Visa" or "Way2Save(R) Savings" arrives as one or more literal U+FFFD
+    characters already baked into the string, not something introduced by
+    Ledger's own storage or rendering (verified: SQLite, the API response,
+    and the frontend all pass these strings through unchanged). There's no
+    way to recover what the original character actually was, so this just
+    removes the noise -- collapsing whatever double space it leaves behind --
+    rather than showing broken boxes in the UI. Applied at sync time so the
+    stored data is clean too, not just the display.
+    """
+    if not value:
+        return value
+    cleaned = _REPLACEMENT_RUN_RE.sub("", value)
+    cleaned = _MULTI_SPACE_RE.sub(" ", cleaned).strip()
+    return cleaned or None
 
 
 def _plaid_error_code(exc: Exception) -> Optional[str]:
@@ -77,8 +103,8 @@ def sync_item_accounts(conn: sqlite3.Connection, item: sqlite3.Row) -> int:
             (
                 acct["account_id"],
                 item["id"],
-                acct.get("name") or "Account",
-                acct.get("official_name"),
+                _clean_plaid_text(acct.get("name")) or "Account",
+                _clean_plaid_text(acct.get("official_name")),
                 acct.get("mask"),
                 str(acct.get("type")) if acct.get("type") is not None else None,
                 str(acct.get("subtype")) if acct.get("subtype") is not None else None,
@@ -124,7 +150,7 @@ def _upsert_transaction(conn: sqlite3.Connection, txn: dict, account_row: sqlite
     if not date:
         return "skipped_pending_hold"
 
-    source = (txn.get("merchant_name") or txn.get("name") or "Unknown").strip()
+    source = _clean_plaid_text(txn.get("merchant_name") or txn.get("name")) or "Unknown"
     amount = -float(plaid_amount)  # flip to Ledger's negative-means-spend convention
     is_pending = bool(txn.get("pending"))
     txn_id = txn["transaction_id"]
@@ -266,8 +292,8 @@ def sync_item_investments(conn: sqlite3.Connection, item: sqlite3.Row) -> None:
             (
                 account_id,
                 holding.get("security_id"),
-                security.get("ticker_symbol"),
-                security.get("name"),
+                _clean_plaid_text(security.get("ticker_symbol")),
+                _clean_plaid_text(security.get("name")),
                 str(sec_type) if sec_type is not None else None,
                 holding.get("quantity"),
                 holding.get("institution_price"),
