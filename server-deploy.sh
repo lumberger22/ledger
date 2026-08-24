@@ -19,6 +19,22 @@ docker stop ledger 2>/dev/null || true
 echo "==> Removing old container..."
 docker rm ledger 2>/dev/null || true
 
+echo "==> Fixing data directory ownership..."
+# The container now runs as a non-root user (see Dockerfile), but
+# ~/ledger/user_data is bind-mounted in below, so *host-side* ownership is
+# what actually governs write access -- the image's own chown doesn't
+# reach a bind mount. Older deploys ran the container as root, so existing
+# files here (charges.db included) are likely still root-owned; without
+# this step the app would come up but fail to write the database. Reading
+# the UID/GID back out of the freshly-built image (rather than hardcoding
+# 1000 here too) keeps this correct even if the Dockerfile's user setup
+# ever changes. Safe to run every deploy -- a no-op once ownership matches.
+mkdir -p ~/ledger/user_data
+APP_UID="$(docker run --rm ledger id -u appuser)"
+APP_GID="$(docker run --rm ledger id -g appuser)"
+sudo chown -R "${APP_UID}:${APP_GID}" ~/ledger/user_data
+echo "    user_data now owned by ${APP_UID}:${APP_GID} (appuser)"
+
 echo "==> Starting new container..."
 docker run -d \
   --name ledger \

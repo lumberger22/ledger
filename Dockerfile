@@ -26,13 +26,14 @@ ENV DATA_DIR=/data
 # files (which need root to write into site-packages and /app), and given
 # ownership of /data so it can still write the SQLite DB/settings there at
 # runtime.
-# NOTE: if /data is bind-mounted from the EC2 host (check server-deploy.sh),
-# this chown only affects the image layer, not a host-mounted volume's
-# actual ownership -- the host directory may need `chown 1000:1000` (or
-# whatever UID useradd assigns) so the container can still write to it after
-# this change ships. Check with `docker exec <container> id appuser` and
-# `ls -ln` on the host path.
-RUN useradd --create-home --shell /usr/sbin/nologin appuser \
+#
+# UID/GID are pinned to 1000 (rather than left to whatever useradd picks)
+# so they're deterministic across rebuilds -- server-deploy.sh reads this
+# same UID back out of the built image and chowns the host's bind-mounted
+# ~/ledger/user_data to match before starting the container, so this stays
+# correct regardless of what UID the host's `ubuntu` user happens to be.
+RUN groupadd --gid 1000 appuser \
+    && useradd --uid 1000 --gid appuser --create-home --shell /usr/sbin/nologin appuser \
     && mkdir -p /data \
     && chown -R appuser:appuser /data /app/backend
 USER appuser
