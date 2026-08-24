@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
   ChevronDown,
   ChevronRight,
@@ -13,6 +14,7 @@ import {
   ChevronUp,
   ArrowUp,
   ArrowDown,
+  LineChart,
 } from "lucide-react";
 import { getBudget, updateBudget, getBudgetStatus } from "../api/budget";
 import { listCharges, updateCharge, deleteCharge } from "../api/charges";
@@ -160,6 +162,13 @@ export default function Budget() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Budget</h1>
         <div className="flex items-center gap-2">
+          <Link
+            to="/analysis"
+            className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 p-2 sm:px-3 sm:py-1.5 rounded-lg"
+          >
+            <LineChart size={13} />
+            <span className="hidden sm:inline">Analysis</span>
+          </Link>
           <div className="inline-flex items-center bg-black/[0.04] rounded-lg p-1 gap-0.5 overflow-x-auto max-w-full">
             {PERIODS.map((p) => (
               <button

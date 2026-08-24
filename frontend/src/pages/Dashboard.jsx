@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -8,9 +8,12 @@ import {
   Repeat,
   Wallet,
   CircleDollarSign,
+  RefreshCw,
 } from "lucide-react";
 import { getDashboard } from "../api/dashboard";
 import { getNetWorth } from "../api/networth";
+import { triggerSync } from "../api/plaid";
+import { getPlaidPending } from "../api/upload";
 import PeriodFilter from "../components/PeriodFilter";
 import CategoryBadge from "../components/CategoryBadge";
 import EmptyState from "../components/EmptyState";
@@ -30,6 +33,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [netWorth, setNetWorth] = useState(null);
+  const [plaidPendingCount, setPlaidPendingCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -47,6 +53,37 @@ export default function Dashboard() {
       .then(setNetWorth)
       .catch(() => setNetWorth(null));
   }, []);
+
+  const refreshPlaidPendingCount = useCallback(() => {
+    getPlaidPending()
+      .then((res) => setPlaidPendingCount(res.total))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshPlaidPendingCount();
+  }, [refreshPlaidPendingCount]);
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      await triggerSync();
+      await Promise.all([
+        getDashboard(period).then(setData),
+        getNetWorth().then(setNetWorth).catch(() => {}),
+      ]);
+      refreshPlaidPendingCount();
+    } catch (err) {
+      setSyncError(
+        err.status === 503
+          ? "Connect a bank account on the Accounts page to enable syncing."
+          : err.message || "Sync failed.",
+      );
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   if (error) {
     return (
@@ -172,6 +209,30 @@ export default function Dashboard() {
           >
             View Budget <ArrowRight size={14} />
           </Link>
+
+          <div className="mt-5 pt-4 border-t border-line flex items-center justify-between gap-3 flex-wrap">
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
+              {syncing ? "Syncing…" : "Sync Accounts"}
+            </button>
+            {plaidPendingCount > 0 ? (
+              <Link
+                to="/upload-preview?source=plaid"
+                className="flex items-center gap-1.5 text-sm font-semibold text-accent-dark bg-accent-light hover:bg-accent-light/70 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                {plaidPendingCount} to review <ArrowRight size={13} />
+              </Link>
+            ) : (
+              <span className="text-xs text-ink-500">Nothing to review</span>
+            )}
+          </div>
+          {syncError && (
+            <p className="text-xs text-over mt-2">{syncError}</p>
+          )}
         </motion.div>
 
         {/* Income summary */}

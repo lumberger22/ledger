@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, X, Landmark, ChevronRight } from "lucide-react";
+import { Plus, Search, X, Landmark, ChevronRight, Trash2 } from "lucide-react";
 import {
   listCharges,
   updateCharge,
   deleteCharge,
+  deleteCharges,
   createCharge,
 } from "../api/charges";
 import { getBudget } from "../api/budget";
@@ -39,6 +40,7 @@ export default function Charges() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [plaidPendingCount, setPlaidPendingCount] = useState(0);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   useEffect(() => {
     getPlaidPending()
@@ -73,6 +75,14 @@ export default function Charges() {
     load();
   }, [load]);
 
+  // A change to which charges are visible invalidates any existing
+  // selection — ids picked under one filter set may not even be on screen
+  // once the filters change, so hang onto a selection across a sort/
+  // direction change (same rows, just reordered) but drop it otherwise.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [search, categoryFilter, recurringOnly, start, end]);
+
   function handleSortChange(field) {
     if (sort === field) {
       setDirection(direction === "asc" ? "desc" : "asc");
@@ -90,6 +100,40 @@ export default function Charges() {
   async function handleDelete(id) {
     if (!confirm("Delete this charge?")) return;
     await deleteCharge(id);
+    load();
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) =>
+      prev.size === charges.length
+        ? new Set()
+        : new Set(charges.map((c) => c.id)),
+    );
+  }
+
+  async function handleBulkDelete() {
+    const count = selectedIds.size;
+    if (!count) return;
+    if (
+      !confirm(
+        `Delete ${count} selected charge${count !== 1 ? "s" : ""}? This can't be undone.`,
+      )
+    )
+      return;
+    await deleteCharges(Array.from(selectedIds));
+    setSelectedIds(new Set());
     load();
   }
 
@@ -307,6 +351,43 @@ export default function Charges() {
         )}
       </div>
 
+      {charges.length > 0 && (
+        <div className="flex items-center gap-3 px-1 flex-wrap">
+          <label className="flex items-center gap-2 text-sm text-ink-700 select-none cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selectedIds.size > 0 && selectedIds.size === charges.length}
+              ref={(el) => {
+                if (el)
+                  el.indeterminate =
+                    selectedIds.size > 0 && selectedIds.size < charges.length;
+              }}
+              onChange={toggleSelectAll}
+            />
+            Select all
+          </label>
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-sm text-ink-500 tabular">
+                {selectedIds.size} selected
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1.5 text-sm font-semibold text-over hover:text-over/80 ml-auto"
+              >
+                <Trash2 size={14} /> Delete Selected
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-sm font-medium text-ink-500 hover:text-ink-900"
+              >
+                Clear
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       <div className="bg-surface border border-line rounded-xl2 shadow-card p-2">
         {loading && !charges.length ? (
           <p className="text-sm text-ink-500 py-8 text-center">Loading…</p>
@@ -325,6 +406,9 @@ export default function Charges() {
             sort={sort}
             direction={direction}
             onSortChange={handleSortChange}
+            selectable
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
           />
         )}
       </div>

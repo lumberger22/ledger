@@ -15,6 +15,8 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  TrendingUp,
+  PieChart,
 } from "lucide-react";
 import {
   createLinkToken,
@@ -263,6 +265,20 @@ export default function Accounts() {
           Accounts
         </h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2">
+            <Link
+              to="/net-worth"
+              className="flex items-center justify-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 px-3 py-1.5 rounded-lg"
+            >
+              <TrendingUp size={14} /> Net Worth
+            </Link>
+            <Link
+              to="/investments"
+              className="flex items-center justify-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 px-3 py-1.5 rounded-lg"
+            >
+              <PieChart size={14} /> Investments
+            </Link>
+          </div>
           {plaidPendingCount > 0 && (
             <Link
               to="/upload-preview?source=plaid"

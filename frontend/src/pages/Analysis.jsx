@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   TrendingUp,
   TrendingDown,
@@ -11,6 +12,7 @@ import {
   Flame,
   ChevronDown,
   ChevronUp,
+  PiggyBank,
 } from "lucide-react";
 import { getAnalysis } from "../api/analysis";
 import PeriodFilter from "../components/PeriodFilter";
@@ -791,11 +793,20 @@ export default function Analysis() {
         <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
           Analysis
         </h1>
-        <PeriodFilter
-          value={period}
-          onChange={setPeriod}
-          options={PERIOD_OPTIONS}
-        />
+        <div className="flex items-center gap-2">
+          <Link
+            to="/budget"
+            className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 p-2 sm:px-3 sm:py-1.5 rounded-lg"
+          >
+            <PiggyBank size={13} />
+            <span className="hidden sm:inline">Budget</span>
+          </Link>
+          <PeriodFilter
+            value={period}
+            onChange={setPeriod}
+            options={PERIOD_OPTIONS}
+          />
+        </div>
       </div>
 
       {noData ? (

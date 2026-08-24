@@ -11,3 +11,5 @@ export const listCharges = (filters = {}) => {
 export const createCharge = (data) => api.post("/api/charges", data);
 export const updateCharge = (id, data) => api.put(`/api/charges/${id}`, data);
 export const deleteCharge = (id) => api.del(`/api/charges/${id}`);
+export const deleteCharges = (ids) =>
+  api.del(`/api/charges/bulk?ids=${encodeURIComponent(ids.join(","))}`);

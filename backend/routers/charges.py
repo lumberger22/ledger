@@ -141,6 +141,26 @@ def update_charge(charge_id: int, update: ChargeUpdate):
         conn.close()
 
 
+@router.delete("/bulk")
+def delete_charges_bulk(
+    ids: str = Query(..., description="Comma-separated list of charge ids")
+):
+    id_list = [i for i in (part.strip() for part in ids.split(",")) if i]
+    if not id_list:
+        raise HTTPException(status_code=400, detail="No ids provided")
+
+    conn = get_connection()
+    try:
+        placeholders = ",".join("?" for _ in id_list)
+        cur = conn.execute(
+            f"DELETE FROM charges WHERE id IN ({placeholders})", id_list
+        )
+        conn.commit()
+        return {"deleted": cur.rowcount, "ids": id_list}
+    finally:
+        conn.close()
+
+
 @router.delete("/{charge_id}")
 def delete_charge(charge_id: int):
     conn = get_connection()

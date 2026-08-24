@@ -5,14 +5,10 @@ import {
   LayoutDashboard,
   Receipt,
   PiggyBank,
-  LineChart,
-  CircleDollarSign,
   Settings as SettingsIcon,
   Upload,
   LogOut,
   Landmark,
-  TrendingUp,
-  PieChart,
   Menu,
   X,
 } from "lucide-react";
@@ -20,15 +16,15 @@ import { useUploadModal } from "../context/UploadModalContext";
 import { getStoredApiKey } from "../api/client";
 import Logo from "./Logo";
 
+// Kept intentionally short (5, incl. Settings) so the nav reads as a set of
+// major sections rather than a list of every page. Investments, Net Worth,
+// Income, and Analysis are one level deeper — reached from Dashboard,
+// Accounts, and Budget via in-page links — rather than living up here.
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/accounts", label: "Accounts", icon: Landmark },
-  { to: "/investments", label: "Investments", icon: PieChart },
-  { to: "/net-worth", label: "Net Worth", icon: TrendingUp },
   { to: "/charges", label: "Charges", icon: Receipt },
   { to: "/budget", label: "Budget", icon: PiggyBank },
-  { to: "/income", label: "Income", icon: CircleDollarSign },
-  { to: "/analysis", label: "Analysis", icon: LineChart },
+  { to: "/accounts", label: "Accounts", icon: Landmark },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

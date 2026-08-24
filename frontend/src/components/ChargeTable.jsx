@@ -16,6 +16,9 @@ export default function ChargeTable({
   direction,
   onSortChange,
   editable = true,
+  selectable = false,
+  selectedIds,
+  onToggleSelect,
 }) {
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({});
@@ -193,51 +196,62 @@ export default function ChargeTable({
             return (
               <div
                 key={charge.id}
-                className="rounded-xl border border-line p-3 flex items-start justify-between gap-3"
+                className="rounded-xl border border-line p-3 flex items-start gap-3"
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-ink-900 truncate">
-                      {charge.source}
-                    </p>
-                    {charge.recurring ? (
-                      <Repeat size={12} className="text-accent shrink-0" />
-                    ) : null}
-                  </div>
-                  {charge.nickname && (
-                    <p className="text-xs text-ink-500 truncate mt-0.5">
-                      {charge.nickname}
-                    </p>
-                  )}
-                  <p className="text-xs text-ink-500 tabular mt-0.5">{charge.date}</p>
-                  <div className="mt-1.5">
-                    <CategoryBadge name={cat?.name} color={cat?.color} />
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <span
-                    className={`text-sm font-medium tabular whitespace-nowrap ${
-                      charge.amount < 0 ? "text-ink-900" : "text-good"
-                    }`}
-                  >
-                    {currency(charge.amount)}
-                  </span>
-                  {editable && (
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        onClick={() => startEdit(charge)}
-                        className="p-1.5 rounded-md text-ink-500 hover:bg-black/5"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => onDelete(charge.id)}
-                        className="p-1.5 rounded-md text-over hover:bg-over/10"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                {selectable && (
+                  <input
+                    type="checkbox"
+                    checked={selectedIds?.has(charge.id) || false}
+                    onChange={() => onToggleSelect?.(charge.id)}
+                    aria-label={`Select charge ${charge.source}`}
+                    className="mt-1 shrink-0"
+                  />
+                )}
+                <div className="flex-1 flex items-start justify-between gap-3 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-ink-900 truncate">
+                        {charge.source}
+                      </p>
+                      {charge.recurring ? (
+                        <Repeat size={12} className="text-accent shrink-0" />
+                      ) : null}
                     </div>
-                  )}
+                    {charge.nickname && (
+                      <p className="text-xs text-ink-500 truncate mt-0.5">
+                        {charge.nickname}
+                      </p>
+                    )}
+                    <p className="text-xs text-ink-500 tabular mt-0.5">{charge.date}</p>
+                    <div className="mt-1.5">
+                      <CategoryBadge name={cat?.name} color={cat?.color} />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <span
+                      className={`text-sm font-medium tabular whitespace-nowrap ${
+                        charge.amount < 0 ? "text-ink-900" : "text-good"
+                      }`}
+                    >
+                      {currency(charge.amount)}
+                    </span>
+                    {editable && (
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          onClick={() => startEdit(charge)}
+                          className="p-1.5 rounded-md text-ink-500 hover:bg-black/5"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => onDelete(charge.id)}
+                          className="p-1.5 rounded-md text-over hover:bg-over/10"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -250,6 +264,7 @@ export default function ChargeTable({
         <table className="w-full border-collapse min-w-[720px]">
           <thead>
             <tr className="border-b border-line">
+              {selectable && <th className="py-2.5 px-3 w-8" />}
               <SortHeader field="date">Date</SortHeader>
               <SortHeader field="source">Source</SortHeader>
               <th className="text-left font-medium text-ink-500 text-xs uppercase tracking-wide py-2.5 px-3">
@@ -276,6 +291,16 @@ export default function ChargeTable({
                     key={charge.id}
                     className="border-b border-line bg-accent-light/40"
                   >
+                    {selectable && (
+                      <td className="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds?.has(charge.id) || false}
+                          onChange={() => onToggleSelect?.(charge.id)}
+                          aria-label={`Select charge ${charge.source}`}
+                        />
+                      </td>
+                    )}
                     <td className="px-3 py-2">
                       <input
                         type="date"
@@ -366,6 +391,16 @@ export default function ChargeTable({
                   key={charge.id}
                   className="border-b border-line group hover:bg-black/[0.015] transition-colors"
                 >
+                  {selectable && (
+                    <td className="px-3 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds?.has(charge.id) || false}
+                        onChange={() => onToggleSelect?.(charge.id)}
+                        aria-label={`Select charge ${charge.source}`}
+                      />
+                    </td>
+                  )}
                   <td className="px-3 py-2.5 text-sm text-ink-700 tabular whitespace-nowrap">
                     {charge.date}
                   </td>
