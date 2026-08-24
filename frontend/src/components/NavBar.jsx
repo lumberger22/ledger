@@ -68,11 +68,11 @@ export default function NavBar({ onLogout }) {
           {hasApiKey && onLogout && (
             <button
               onClick={onLogout}
-              title="Lock app"
+              title="Log out"
               className="flex items-center gap-1.5 text-ink-500 hover:text-ink-900 text-[15px] font-medium px-2 sm:px-2.5 py-2 rounded-lg hover:bg-black/5"
             >
               <LogOut size={16} />
-              <span className="hidden sm:inline">Lock</span>
+              <span className="hidden sm:inline">Log out</span>
             </button>
           )}
           <button

@@ -1,10 +1,11 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
 
-from config import DATA_DIR
+from config import DATA_DIR, MAX_UPLOAD_BYTES
 from db import get_connection
 from services.csv_parser import parse_csv, CsvParseError
 from services.json_store import read_json
 from services.analytics import find_prior_categorizations
+from services.upload_limits import read_upload_within_limit
 
 router = APIRouter(prefix="/api/upload", tags=["upload"])
 
@@ -20,7 +21,9 @@ ACCOUNT_TYPES = {"credit_card", "checking"}
 
 @router.post("")
 async def upload_csv(
-    file: UploadFile = File(...), account_type: str = Form("credit_card")
+    request: Request,
+    file: UploadFile = File(...),
+    account_type: str = Form("credit_card"),
 ):
     """
     Upload + parse a single CSV -> pending rows. `account_type` determines
@@ -50,7 +53,7 @@ async def upload_csv(
     else:
         mapping = settings.get("csv_column_mapping", DEFAULT_CC_MAPPING)
 
-    contents = await file.read()
+    contents = await read_upload_within_limit(request, file, MAX_UPLOAD_BYTES)
     try:
         rows, batch_id, warnings, skipped_positive = parse_csv(contents, mapping)
     except CsvParseError as e:

@@ -11,10 +11,17 @@ expected to check that (or let PlaidNotConfigured propagate as a clear 503)
 before reaching into this module.
 """
 
+import hashlib
+import hmac
+import json
+import logging
+import time
 from functools import lru_cache
 from typing import Optional
 
+import jwt
 import plaid
+from jwt import PyJWK
 from plaid.api import plaid_api
 from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.country_code import CountryCode
@@ -44,6 +51,8 @@ from config import (
 # design (see PLAID_INTEGRATION_PLAN.md), so there's only ever one "user"
 # from Plaid's point of view.
 CLIENT_USER_ID = "ledger-owner"
+
+logger = logging.getLogger("ledger")
 
 
 class PlaidNotConfigured(RuntimeError):
@@ -164,3 +173,69 @@ def get_webhook_verification_key(key_id: str) -> dict:
     request = WebhookVerificationKeyGetRequest(key_id=key_id)
     response = _client().webhook_verification_key_get(request)
     return response.to_dict()
+
+
+# Verification keys are cached by key_id for the life of the process, per
+# Plaid's own guidance -- they don't change often. A key with a non-null
+# expired_at is stale and always re-fetched rather than trusted from cache.
+_webhook_key_cache: dict[str, dict] = {}
+
+# Reject a webhook whose JWT was issued more than this long ago. Bounds how
+# long a captured, still-validly-signed webhook could be replayed.
+WEBHOOK_MAX_AGE_SECONDS = 300  # 5 minutes
+
+
+def verify_webhook(body: bytes, signed_jwt: Optional[str]) -> bool:
+    """
+    Verify a Plaid webhook POST per Plaid's documented algorithm
+    (https://plaid.com/docs/api/webhooks/webhook-verification/): the
+    `Plaid-Verification` header carries a JWT, signed with a key Plaid's
+    /webhook_verification_key/get endpoint vouches for, whose payload
+    includes an issued-at time and a SHA-256 hash of the raw request body.
+    All three checks matter together -- signature alone doesn't stop a
+    replayed old webhook, and freshness alone doesn't stop a tampered body.
+    Returns False (never raises) for any malformed/untrusted/stale input, so
+    callers can treat this as a plain accept/reject gate.
+    """
+    if not signed_jwt:
+        return False
+
+    try:
+        unverified_header = jwt.get_unverified_header(signed_jwt)
+    except jwt.exceptions.DecodeError:
+        return False
+
+    key_id = unverified_header.get("kid")
+    # Plaid always signs webhook JWTs with ES256; refuse anything else
+    # outright rather than letting the signer choose the algorithm.
+    if not key_id or unverified_header.get("alg") != "ES256":
+        return False
+
+    key = _webhook_key_cache.get(key_id)
+    if key is None or key.get("expired_at") is not None:
+        try:
+            key = get_webhook_verification_key(key_id)["key"]
+        except Exception:  # noqa: BLE001 - any lookup failure just fails verification
+            logger.exception("Failed to fetch Plaid webhook verification key %s", key_id)
+            return False
+        _webhook_key_cache[key_id] = key
+
+    if key.get("expired_at") is not None:
+        return False
+
+    try:
+        public_key = PyJWK.from_json(json.dumps(key)).key
+        payload = jwt.decode(signed_jwt, key=public_key, algorithms=["ES256"])
+    except jwt.exceptions.InvalidTokenError:
+        return False
+
+    issued_at = payload.get("iat")
+    if not isinstance(issued_at, (int, float)) or time.time() - issued_at > WEBHOOK_MAX_AGE_SECONDS:
+        return False
+
+    body_hash = hashlib.sha256(body).hexdigest()
+    claimed_hash = payload.get("request_body_sha256", "")
+    if not hmac.compare_digest(body_hash, claimed_hash):
+        return False
+
+    return True

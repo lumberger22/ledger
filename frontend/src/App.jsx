@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import { UploadModalProvider } from "./context/UploadModalContext";
 import Dashboard from "./pages/Dashboard";
@@ -17,9 +17,17 @@ import FaceIdGate from "./components/FaceIdGate";
 import { api, clearStoredApiKey, getStoredApiKey } from "./api/client";
 import { isFaceIdEnabled } from "./api/webauthn";
 
+// Fixed paths used any time we reset navigation state on the user, so the
+// app never leaves someone parked on a URL for a page they can no longer
+// (or don't yet) have access to.
+const LOGIN_PATH = "/login";
+const STABLE_PATH = "/";
+
 export default function App() {
   // 'checking' | 'locked' | 'faceid-gate' | 'unlocked'
   const [authState, setAuthState] = useState("checking");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     async function checkAuth() {
@@ -55,6 +63,16 @@ export default function App() {
       window.removeEventListener("budget-app-unauthorized", onUnauthorized);
   }, []);
 
+  // Whenever we're not authenticated, make sure the address bar actually
+  // shows /login instead of leaving whatever deep link was requested (e.g.
+  // /settings) sitting behind the lock screen. Remembers where you were
+  // trying to go so a successful login can send you back there.
+  useEffect(() => {
+    if (authState === "locked" && location.pathname !== LOGIN_PATH) {
+      navigate(LOGIN_PATH, { replace: true, state: { from: location } });
+    }
+  }, [authState, location, navigate]);
+
   // Re-lock behind Face ID whenever the app is brought back to the
   // foreground (tab/app switch, screen lock, etc.) — this is what makes it
   // feel like an actual app lock rather than a one-time login gate.
@@ -76,6 +94,8 @@ export default function App() {
 
   function handleLoginSuccess() {
     setAuthState("unlocked");
+    const from = location.state?.from?.pathname;
+    navigate(from && from !== LOGIN_PATH ? from : STABLE_PATH, { replace: true });
   }
 
   function handleFaceIdSuccess() {
@@ -89,6 +109,10 @@ export default function App() {
   function handleLogout() {
     clearStoredApiKey();
     setAuthState("locked");
+    // Reset to a stable, known path rather than leaving the lock screen
+    // rendered on top of whatever route was open (e.g. /settings) —
+    // logging back in should start fresh, not silently resume mid-page.
+    navigate(LOGIN_PATH, { replace: true });
   }
 
   if (authState === "checking") {
@@ -128,6 +152,11 @@ export default function App() {
             <Route path="/analysis" element={<Analysis />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/income" element={<Income />} />
+            {/* Already authenticated and hit /login (e.g. typed manually,
+                back button, stale tab) — send back into the app instead of
+                rendering nothing under the NavBar. */}
+            <Route path={LOGIN_PATH} element={<Navigate to={STABLE_PATH} replace />} />
+            <Route path="*" element={<Navigate to={STABLE_PATH} replace />} />
           </Routes>
         </main>
       </div>

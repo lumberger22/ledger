@@ -3,14 +3,15 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
-from config import DATA_DIR
+from config import DATA_DIR, MAX_UPLOAD_BYTES
 from db import get_connection
 from models import PaystubConfirm
 from services.analytics import resolve_period
 from services.json_store import read_json
 from services.paystub_parser import PaystubParseError, parse_paystub_pdf
+from services.upload_limits import read_upload_within_limit
 
 router = APIRouter(prefix="/api/income", tags=["income"])
 
@@ -183,10 +184,10 @@ def _summary(records: list[dict], config: dict):
 
 
 @router.post("/upload")
-async def upload_paystub(file: UploadFile = File(...)):
+async def upload_paystub(request: Request, file: UploadFile = File(...)):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Upload a PDF payslip.")
-    contents = await file.read()
+    contents = await read_upload_within_limit(request, file, MAX_UPLOAD_BYTES)
     try:
         records = parse_paystub_pdf(contents)
     except PaystubParseError as exc:

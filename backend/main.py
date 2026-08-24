@@ -2,7 +2,7 @@ import logging
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from auth import verify_api_key
@@ -22,6 +22,7 @@ from routers import (
     settings,
     upload,
 )
+from services.rate_limit import SlidingWindowLimiter, get_client_ip
 
 logger = logging.getLogger("ledger")
 
@@ -36,8 +37,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-API-Key"],
 )
 
 @app.middleware("http")
@@ -46,14 +47,70 @@ async def auth_middleware(request: Request, call_next):
         try:
             verify_api_key(request)
         except HTTPException as exc:
-            from fastapi.responses import JSONResponse
-
             return JSONResponse(
                 status_code=exc.status_code,
                 content={"detail": exc.detail},
+                headers=exc.headers,
             )
 
     return await call_next(request)
+
+
+# General per-IP throughput limit across /api/*, separate from and coarser
+# than the auth-failure lockout in auth.py: this one blunts scraping,
+# accidental client-side retry storms, and resource-exhaustion attempts
+# regardless of whether requests carry a valid key, rather than specifically
+# targeting password guessing. /api/health is exempt (cheap, may be polled
+# by an uptime monitor); /api/plaid/webhook gets its own, more permissive
+# counter since Plaid may legitimately fire several webhooks in quick
+# succession (see SECURITY_HARDENING_PLAN.md SS2).
+_api_limiter = SlidingWindowLimiter(max_events=180, window_seconds=60)
+_webhook_limiter = SlidingWindowLimiter(max_events=30, window_seconds=60)
+_RATE_LIMIT_EXEMPT_PATHS = {"/api/health"}
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    path = request.url.path
+    if path.startswith("/api/") and path not in _RATE_LIMIT_EXEMPT_PATHS:
+        ip = get_client_ip(request)
+        limiter = _webhook_limiter if path == "/api/plaid/webhook" else _api_limiter
+        allowed, retry_after = limiter.hit(ip)
+        if not allowed:
+            logger.warning("Rate limit exceeded for %s from %s", path, ip)
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests"},
+                headers={"Retry-After": str(int(retry_after))},
+            )
+
+    return await call_next(request)
+
+
+# Security headers on every response, including the SPA's static files, not
+# just the API -- see SECURITY_HARDENING_PLAN.md SS6. CSP starts in
+# report-only mode: watch the browser console for violations for a while
+# (Vite build, Plaid Link's iframe/popup, WebAuthn for Face ID quick-unlock)
+# before flipping it to an enforcing Content-Security-Policy header.
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    if request.url.scheme == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+    response.headers["Content-Security-Policy-Report-Only"] = (
+        "default-src 'self'; "
+        "connect-src 'self' https://production.plaid.com https://sandbox.plaid.com; "
+        "frame-src https://cdn.plaid.com; "
+        "img-src 'self' data:; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "frame-ancestors 'none'"
+    )
+    return response
 
 
 _scheduler = None
@@ -124,11 +181,19 @@ if STATIC_DIR.is_dir() and (STATIC_DIR / "index.html").is_file():
     if assets_dir.is_dir():
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
+    _static_root = STATIC_DIR.resolve()
+
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         if full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="Not found")
-        file_path = STATIC_DIR / full_path
-        if file_path.is_file():
-            return FileResponse(file_path)
+        # Resolve symlinks/".." before deciding what to serve — full_path
+        # comes straight from the URL, so without this a path like
+        # "../../../etc/passwd" (or its %2e%2e-encoded form) would let a
+        # request read arbitrary files off the host via simple string
+        # joining. Anything that resolves outside STATIC_DIR falls back to
+        # the SPA shell instead, same as any other unmatched client route.
+        candidate = (STATIC_DIR / full_path).resolve()
+        if candidate.is_relative_to(_static_root) and candidate.is_file():
+            return FileResponse(candidate)
         return FileResponse(STATIC_DIR / "index.html")

@@ -9,6 +9,7 @@ Ledger should keep working with manual/CSV entry for anyone who hasn't set
 up Plaid yet.
 """
 
+import json
 import logging
 from datetime import datetime, timezone
 
@@ -192,15 +193,27 @@ async def plaid_webhook(request: Request):
     """
     Plaid pushes events here (SYNC_UPDATES_AVAILABLE, item errors like
     ITEM_LOGIN_REQUIRED, etc). We don't gate this behind the app's X-API-Key
-    (Plaid can't send it), so this is intentionally the one endpoint that
-    trusts an unauthenticated POST — see PLAID_INTEGRATION_PLAN.md §6 on
-    verifying Plaid's webhook JWT signature as a hardening follow-up before
-    relying on this in place of the scheduled sync.
+    (Plaid can't send it) -- instead the request is authenticated by
+    verifying the JWT signature Plaid attaches in the `Plaid-Verification`
+    header (services.plaid_client.verify_webhook), per
+    PLAID_INTEGRATION_PLAN.md §6. Raw bytes are read (and hashed) before any
+    JSON parsing, since the JWT's claim is over the exact bytes Plaid sent.
     """
     if not PLAID_CONFIGURED:
         return {"ignored": True}
 
-    payload = await request.json()
+    body = await request.body()
+    signed_jwt = request.headers.get("Plaid-Verification")
+    if not plaid_client.verify_webhook(body, signed_jwt):
+        client_ip = request.client.host if request.client else "unknown"
+        logger.warning("Rejected unverified Plaid webhook POST from %s", client_ip)
+        raise HTTPException(status_code=401, detail="Webhook verification failed")
+
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
     plaid_item_id = payload.get("item_id")
     webhook_type = payload.get("webhook_type")
     if not plaid_item_id:
