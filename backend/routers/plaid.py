@@ -9,6 +9,7 @@ Ledger should keep working with manual/CSV entry for anyone who hasn't set
 up Plaid yet.
 """
 
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request
@@ -20,6 +21,7 @@ from services import plaid_client, plaid_sync
 from services.crypto import decrypt_token, encrypt_token
 
 router = APIRouter(prefix="/api/plaid", tags=["plaid"])
+logger = logging.getLogger("ledger")
 
 
 def _require_configured():
@@ -53,7 +55,14 @@ def create_link_token(body: LinkTokenRequest):
     try:
         result = plaid_client.create_link_token(update_item_access_token=update_token)
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=502, detail=f"Plaid error: {exc}")
+        # 500, not 502/504 — Cloudflare intercepts those "gateway" codes at
+        # the edge and replaces the body with its own generic error page,
+        # which silently swallows this detail message before it ever
+        # reaches the browser. logger.exception also gets it into
+        # `docker logs`, since a raised HTTPException otherwise leaves no
+        # trace beyond uvicorn's plain access-log line.
+        logger.exception("Plaid link-token creation failed")
+        raise HTTPException(status_code=500, detail=f"Plaid error: {exc}")
     return {"link_token": result["link_token"], "expiration": result.get("expiration")}
 
 
@@ -63,7 +72,10 @@ def exchange_token(body: ExchangeTokenRequest):
     try:
         exchange = plaid_client.exchange_public_token(body.public_token)
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=502, detail=f"Plaid error: {exc}")
+        # See the matching comment in create_link_token above — 500 instead
+        # of 502 so Cloudflare doesn't swallow this response body.
+        logger.exception("Plaid token exchange failed")
+        raise HTTPException(status_code=500, detail=f"Plaid error: {exc}")
 
     access_token = exchange["access_token"]
     plaid_item_id = exchange["item_id"]
