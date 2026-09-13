@@ -69,7 +69,7 @@ const compactCurrency = (n) =>
   `$${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const PERIOD_OPTIONS = [
-  { value: "this_month", label: "This Month" },
+  { value: "custom", label: "Select Timeframe" },
   { value: "30d", label: "30 Days" },
   { value: "ytd", label: "YTD" },
 ];
@@ -761,15 +761,16 @@ function AnalysisEmptyState() {
 
 export default function Analysis() {
   const [period, setPeriod] = useState("this_month");
+  const [customRange, setCustomRange] = useState({ start: null, end: null });
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    getAnalysis(period)
+    getAnalysis(period, customRange.start, customRange.end)
       .then(setData)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, customRange.start, customRange.end]);
 
   if (loading && !data) {
     return <p className="text-sm text-ink-500">Loading…</p>;
@@ -805,6 +806,8 @@ export default function Analysis() {
             value={period}
             onChange={setPeriod}
             options={PERIOD_OPTIONS}
+            customRange={customRange}
+            onCustomRange={(start, end) => setCustomRange({ start, end })}
           />
         </div>
       </div>

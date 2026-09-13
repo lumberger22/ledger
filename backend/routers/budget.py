@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from db import get_connection
 from models import BudgetUpdate
@@ -32,7 +32,26 @@ def update_budget(update: BudgetUpdate):
     Categories missing from the payload are left in place (never deleted
     here) — the "remove" action in the UI is an archive toggle, matching the
     behavior this endpoint has always had.
+
+    Only blocks on over-allocation when a manual monthly income override is
+    supplied. There's no period-independent "current income" figure to
+    check against otherwise (the paystub-derived income shown on the Budget
+    page is period-dependent — partial-month, or divided by 3 for the
+    3-month-avg view — so it isn't a reliable basis for a hard block here).
     """
+    if update.income is not None:
+        active_target = sum(
+            c.monthly_target for c in update.categories if not c.archived
+        )
+        if active_target > update.income:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Budgeted categories total {active_target:.2f}, which is "
+                    f"more than the {update.income:.2f} income entered."
+                ),
+            )
+
     conn = get_connection()
     try:
         cats.upsert_categories(conn, [c.model_dump() for c in update.categories])

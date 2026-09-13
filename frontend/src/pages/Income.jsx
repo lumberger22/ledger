@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  Calendar,
   DollarSign,
   Landmark,
   PiggyBank,
@@ -10,19 +11,12 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getIncome } from "../api/income";
-import PeriodFilter from "../components/PeriodFilter";
 import CategoryBreakdownChart from "../components/charts/CategoryBreakdownChart";
 import IncomeTrendChart from "../components/charts/IncomeTrendChart";
 import PaystubUploadModal from "../components/PaystubUploadModal";
 import PaystubReviewModal from "../components/PaystubReviewModal";
 import EmptyState from "../components/EmptyState";
-
-const PERIODS = [
-  { value: "this_month", label: "This Month" },
-  { value: "30d", label: "30 Days" },
-  { value: "ytd", label: "YTD" },
-  { value: "3month_avg", label: "3-Month" },
-];
+import { formatShortDate } from "../utils/date";
 
 const currency = (n) =>
   `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -172,7 +166,6 @@ function PaystubRow({ stub, expanded, onToggle }) {
 }
 
 export default function Income() {
-  const [period, setPeriod] = useState("this_month");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -181,14 +174,14 @@ export default function Income() {
 
   function load() {
     setLoading(true);
-    return getIncome(period)
+    return getIncome("last_paycheck")
       .then(setData)
       .finally(() => setLoading(false));
   }
 
   useEffect(() => {
     load();
-  }, [period]);
+  }, []);
 
   const summary = data?.summary;
   const hasData = Boolean(data?.paystub_count);
@@ -205,7 +198,16 @@ export default function Income() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <PeriodFilter value={period} onChange={setPeriod} options={PERIODS} />
+          <div className="inline-flex items-center gap-1.5 bg-black/[0.04] rounded-lg px-3 py-1.5 text-sm font-medium text-ink-900 whitespace-nowrap">
+            <Calendar size={14} className="text-ink-500 shrink-0" />
+            Last Paycheck
+            {data?.period?.start && data?.period?.end && (
+              <span className="text-ink-500 font-normal">
+                ({formatShortDate(data.period.start)} –{" "}
+                {formatShortDate(data.period.end)})
+              </span>
+            )}
+          </div>
           <button
             onClick={() => setUploadOpen(true)}
             title="Upload Payslip"
@@ -393,10 +395,10 @@ export default function Income() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
-                  Paystub History
+                  Latest Paystub
                 </p>
                 <p className="text-sm text-ink-500 mt-1">
-                  Expand a paycheck for the complete stored itemization.
+                  Expand for the complete stored itemization.
                 </p>
               </div>
               <button

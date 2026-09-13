@@ -21,6 +21,8 @@ import { listCharges, updateCharge, deleteCharge } from "../api/charges";
 import ProgressBar from "../components/ProgressBar";
 import ChargeTable from "../components/ChargeTable";
 import EmptyState from "../components/EmptyState";
+import PeriodFilter from "../components/PeriodFilter";
+import { formatShortDate } from "../utils/date";
 
 const currency = (n) =>
   `$${(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -34,7 +36,7 @@ const signedCurrency = (n) => (
   </span>
 );
 const PERIODS = [
-  { value: "this_month", label: "This Month" },
+  { value: "custom", label: "Select Timeframe" },
   { value: "30d", label: "30 Days" },
   { value: "3month_avg", label: "3-Month Avg" },
 ];
@@ -52,6 +54,7 @@ const PALETTE = [
 
 export default function Budget() {
   const [period, setPeriod] = useState("this_month");
+  const [customRange, setCustomRange] = useState({ start: null, end: null });
   const [status, setStatus] = useState(null);
   const [budget, setBudget] = useState(null);
   const [expanded, setExpanded] = useState(null);
@@ -60,12 +63,13 @@ export default function Budget() {
   const [editing, setEditing] = useState(false);
   const [draftCategories, setDraftCategories] = useState([]);
   const [draftIncome, setDraftIncome] = useState("");
+  const [saveError, setSaveError] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const [statusRes, budgetRes] = await Promise.all([
-        getBudgetStatus(period),
+        getBudgetStatus(period, customRange.start, customRange.end),
         getBudget(),
       ]);
       setStatus(statusRes);
@@ -73,7 +77,7 @@ export default function Budget() {
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [period, customRange.start, customRange.end]);
 
   useEffect(() => {
     load();
@@ -98,6 +102,7 @@ export default function Budget() {
   function startEditing() {
     setDraftCategories(budget.categories.map((c) => ({ ...c })));
     setDraftIncome(budget.income ?? "");
+    setSaveError(null);
     setEditing(true);
   }
 
@@ -129,12 +134,30 @@ export default function Budget() {
   }
 
   async function saveBudget() {
+    const income = draftIncome === "" ? null : parseFloat(draftIncome);
+    const activeTarget = draftCategories
+      .filter((c) => !c.archived)
+      .reduce((sum, c) => sum + (parseFloat(c.monthly_target) || 0), 0);
+
+    // Only hard-block against a manually entered income override. The
+    // paystub-derived income shown elsewhere on this page is period-
+    // dependent (a partial month, or divided by 3 for the 3-month-avg
+    // view), so it's shown as an informational cushion figure but isn't a
+    // reliable basis for blocking a save.
+    if (income != null && !Number.isNaN(income) && activeTarget > income) {
+      setSaveError(
+        `Budgeted categories total ${currency(activeTarget)}, which is more than your ${currency(income)} income. Lower a target or raise income to save.`,
+      );
+      return;
+    }
+
+    setSaveError(null);
     await updateBudget({
       categories: draftCategories.map((c) => ({
         ...c,
         monthly_target: parseFloat(c.monthly_target) || 0,
       })),
-      income: draftIncome === "" ? null : parseFloat(draftIncome),
+      income,
     });
     setEditing(false);
     load();
@@ -157,6 +180,20 @@ export default function Budget() {
 
   const hasCategories = budget?.categories?.some((c) => !c.archived);
 
+  const draftIncomeNum = draftIncome === "" ? null : parseFloat(draftIncome);
+  const draftActiveTarget = draftCategories
+    .filter((c) => !c.archived)
+    .reduce((sum, c) => sum + (parseFloat(c.monthly_target) || 0), 0);
+  const isOverAllocated =
+    draftIncomeNum != null &&
+    !Number.isNaN(draftIncomeNum) &&
+    draftActiveTarget > draftIncomeNum;
+
+  const periodLabel =
+    period === "custom" && customRange.start && customRange.end
+      ? `${formatShortDate(customRange.start)} – ${formatShortDate(customRange.end)}`
+      : PERIODS.find((p) => p.value === period)?.label;
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -169,21 +206,13 @@ export default function Budget() {
             <LineChart size={13} />
             <span className="hidden sm:inline">Analysis</span>
           </Link>
-          <div className="inline-flex items-center bg-black/[0.04] rounded-lg p-1 gap-0.5 overflow-x-auto max-w-full">
-            {PERIODS.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => setPeriod(p.value)}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
-                  period === p.value
-                    ? "bg-white text-ink-900 shadow-sm"
-                    : "text-ink-500 hover:text-ink-900"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          <PeriodFilter
+            value={period}
+            onChange={setPeriod}
+            options={PERIODS}
+            customRange={customRange}
+            onCustomRange={(start, end) => setCustomRange({ start, end })}
+          />
           {!editing && (
             <button
               onClick={startEditing}
@@ -209,8 +238,7 @@ export default function Budget() {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-1">
-                    {isOver ? "Over Budget" : "Under Budget"} —{" "}
-                    {PERIODS.find((p) => p.value === period)?.label}
+                    {isOver ? "Over Budget" : "Under Budget"} — {periodLabel}
                   </p>
                   <div className="flex items-baseline gap-2">
                     <span
@@ -246,33 +274,46 @@ export default function Budget() {
           );
         })()}
 
-      {status?.income != null && (
-        <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
-              Total Budgeted vs Income
-            </p>
-            <span className="text-sm tabular text-ink-700">
-              {currency(status.total_target)} / {currency(status.income)}
-            </span>
-          </div>
-          <ProgressBar
-            percent={
-              status.income > 0
-                ? (status.total_target / status.income) * 100
-                : 0
-            }
-            status="on_track"
-            color="#2A6F6A"
-            height={8}
-          />
-          <p className="text-xs text-ink-500 mt-2">
-            {status.income_source === "paystub"
-              ? "Income is connected to confirmed payslips. Enter a monthly income value while editing Budget to override it."
-              : "Income is using your manual monthly override."}
-          </p>
-        </div>
-      )}
+      {status?.income != null &&
+        (() => {
+          const cushion = status.income - status.total_target;
+          const cushionOver = cushion < 0;
+          return (
+            <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-ink-500 uppercase tracking-wide">
+                  Total Budgeted vs Income
+                </p>
+                <span className="text-sm tabular text-ink-700">
+                  {currency(status.total_target)} / {currency(status.income)}
+                </span>
+              </div>
+              <ProgressBar
+                percent={
+                  status.income > 0
+                    ? (status.total_target / status.income) * 100
+                    : 0
+                }
+                status="on_track"
+                color="#2A6F6A"
+                height={8}
+              />
+              <div className="flex items-center justify-between gap-2 flex-wrap mt-2.5">
+                <p className="text-xs text-ink-500">
+                  {status.income_source === "paystub"
+                    ? "Income is connected to confirmed payslips. Enter a monthly income value while editing Budget to override it."
+                    : "Income is using your manual monthly override."}
+                </p>
+                <span
+                  className={`text-sm font-semibold tabular whitespace-nowrap ${cushionOver ? "text-over" : "text-good"}`}
+                >
+                  {cushionOver ? "Over-allocated" : "Cushion"}:{" "}
+                  {signedCurrency(cushion)}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
 
       {editing && (
         <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5 space-y-4">
@@ -336,6 +377,21 @@ export default function Budget() {
             <Plus size={14} /> Add Category
           </button>
 
+          {isOverAllocated && (
+            <p className="flex items-center gap-1.5 text-xs text-over">
+              <AlertTriangle size={13} />
+              Budgeted categories total {currency(draftActiveTarget)}, more
+              than your {currency(draftIncomeNum)} income. Lower a target or
+              raise income before saving.
+            </p>
+          )}
+          {saveError && (
+            <p className="flex items-center gap-1.5 text-xs text-over">
+              <AlertTriangle size={13} />
+              {saveError}
+            </p>
+          )}
+
           <div className="flex items-center gap-2 justify-end pt-2 border-t border-line">
             <button
               onClick={() => setEditing(false)}
@@ -345,7 +401,8 @@ export default function Budget() {
             </button>
             <button
               onClick={saveBudget}
-              className="flex items-center gap-1 text-sm font-semibold text-white bg-accent hover:bg-accent-dark px-3.5 py-1.5 rounded-lg"
+              disabled={isOverAllocated}
+              className="flex items-center gap-1 text-sm font-semibold text-white bg-accent hover:bg-accent-dark disabled:opacity-40 px-3.5 py-1.5 rounded-lg"
             >
               <Check size={14} /> Save
             </button>

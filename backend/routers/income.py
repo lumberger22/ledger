@@ -77,6 +77,13 @@ def _fetch_paystubs(conn, start: str, end: str):
     return [dict(r) for r in rows]
 
 
+def _fetch_last_paystub(conn):
+    row = conn.execute(
+        "SELECT * FROM paystubs ORDER BY check_date DESC, id DESC LIMIT 1",
+    ).fetchone()
+    return dict(row) if row else None
+
+
 def _attach_details(conn, paystubs: list[dict]):
     if not paystubs:
         return []
@@ -245,11 +252,20 @@ def confirm_paystubs(payload: PaystubConfirm):
 
 @router.get("")
 def get_income(period: str = "this_month", start: str | None = None, end: str | None = None):
-    start_d, end_d = _period(period, start, end)
     config = _category_config()
     conn = get_connection()
     try:
-        paystubs = _attach_details(conn, _fetch_paystubs(conn, start_d, end_d))
+        if period == "last_paycheck":
+            last = _fetch_last_paystub(conn)
+            if last:
+                paystubs = _attach_details(conn, [last])
+                start_d, end_d = last["pay_period_start"], last["pay_period_end"]
+            else:
+                paystubs = []
+                start_d, end_d = _period("this_month", None, None)
+        else:
+            start_d, end_d = _period(period, start, end)
+            paystubs = _attach_details(conn, _fetch_paystubs(conn, start_d, end_d))
         all_recent = _attach_details(conn, _fetch_paystubs(conn, "1900-01-01", "2999-12-31"))
     finally:
         conn.close()

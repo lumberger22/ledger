@@ -27,8 +27,17 @@ const statusCopy = {
   over: { label: "Over Budget", color: "text-over", bg: "bg-over/10" },
 };
 
+// "This Month" (below) is replaced by "Select Timeframe" (custom), and YTD
+// is dropped from the dashboard specifically — both stay available on
+// other pages.
+const PERIOD_OPTIONS = [
+  { value: "custom", label: "Select Timeframe" },
+  { value: "30d", label: "30 Days" },
+];
+
 export default function Dashboard() {
   const [period, setPeriod] = useState("this_month");
+  const [customRange, setCustomRange] = useState({ start: null, end: null });
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,11 +48,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     setLoading(true);
-    getDashboard(period)
+    getDashboard(period, customRange.start, customRange.end)
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, customRange.start, customRange.end]);
 
   useEffect(() => {
     // Net worth doesn't depend on the period filter (it's a point-in-time
@@ -70,7 +79,7 @@ export default function Dashboard() {
     try {
       await triggerSync();
       await Promise.all([
-        getDashboard(period).then(setData),
+        getDashboard(period, customRange.start, customRange.end).then(setData),
         getNetWorth().then(setNetWorth).catch(() => {}),
       ]);
       refreshPlaidPendingCount();
@@ -128,7 +137,13 @@ export default function Dashboard() {
         <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
           Dashboard
         </h1>
-        <PeriodFilter value={period} onChange={setPeriod} />
+        <PeriodFilter
+          value={period}
+          onChange={setPeriod}
+          options={PERIOD_OPTIONS}
+          customRange={customRange}
+          onCustomRange={(start, end) => setCustomRange({ start, end })}
+        />
       </div>
 
       {netWorth && netWorth.assets.accounts.length + netWorth.liabilities.accounts.length > 0 && (
