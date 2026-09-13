@@ -42,4 +42,11 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
+  // Pure-logic unit tests only (utils/budget.js, utils/date.js) — no DOM
+  // needed, so the default 'node' environment keeps this fast with no
+  // extra jsdom/testing-library dependency.
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.js'],
+  },
 })

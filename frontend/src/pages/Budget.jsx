@@ -23,6 +23,7 @@ import ChargeTable from "../components/ChargeTable";
 import EmptyState from "../components/EmptyState";
 import PeriodFilter from "../components/PeriodFilter";
 import { formatShortDate } from "../utils/date";
+import { activeTargetTotal, isOverAllocated as computeOverAllocated } from "../utils/budget";
 
 const currency = (n) =>
   `$${(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -135,16 +136,11 @@ export default function Budget() {
 
   async function saveBudget() {
     const income = draftIncome === "" ? null : parseFloat(draftIncome);
-    const activeTarget = draftCategories
-      .filter((c) => !c.archived)
-      .reduce((sum, c) => sum + (parseFloat(c.monthly_target) || 0), 0);
+    const activeTarget = activeTargetTotal(draftCategories);
 
-    // Only hard-block against a manually entered income override. The
-    // paystub-derived income shown elsewhere on this page is period-
-    // dependent (a partial month, or divided by 3 for the 3-month-avg
-    // view), so it's shown as an informational cushion figure but isn't a
-    // reliable basis for blocking a save.
-    if (income != null && !Number.isNaN(income) && activeTarget > income) {
+    // Only hard-block against a manually entered income override — see
+    // utils/budget.js (mirrors routers/budget.py's update_budget()) for why.
+    if (computeOverAllocated(income, activeTarget)) {
       setSaveError(
         `Budgeted categories total ${currency(activeTarget)}, which is more than your ${currency(income)} income. Lower a target or raise income to save.`,
       );
@@ -180,14 +176,8 @@ export default function Budget() {
 
   const hasCategories = budget?.categories?.some((c) => !c.archived);
 
-  const draftIncomeNum = draftIncome === "" ? null : parseFloat(draftIncome);
-  const draftActiveTarget = draftCategories
-    .filter((c) => !c.archived)
-    .reduce((sum, c) => sum + (parseFloat(c.monthly_target) || 0), 0);
-  const isOverAllocated =
-    draftIncomeNum != null &&
-    !Number.isNaN(draftIncomeNum) &&
-    draftActiveTarget > draftIncomeNum;
+  const draftActiveTarget = activeTargetTotal(draftCategories);
+  const overAllocated = computeOverAllocated(draftIncome, draftActiveTarget);
 
   const periodLabel =
     period === "custom" && customRange.start && customRange.end
@@ -377,7 +367,7 @@ export default function Budget() {
             <Plus size={14} /> Add Category
           </button>
 
-          {isOverAllocated && (
+          {overAllocated && (
             <p className="flex items-center gap-1.5 text-xs text-over">
               <AlertTriangle size={13} />
               Budgeted categories total {currency(draftActiveTarget)}, more
@@ -401,7 +391,7 @@ export default function Budget() {
             </button>
             <button
               onClick={saveBudget}
-              disabled={isOverAllocated}
+              disabled={overAllocated}
               className="flex items-center gap-1 text-sm font-semibold text-white bg-accent hover:bg-accent-dark disabled:opacity-40 px-3.5 py-1.5 rounded-lg"
             >
               <Check size={14} /> Save
