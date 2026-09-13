@@ -15,6 +15,11 @@ user_data/*.json
 user_data/*.bak
 !user_data/.gitkeep
 
+# backup.sh's output — lands inside ~/ledger (the repo clone) on the EC2
+# host by default, same reasoning as user_data/ above: these zips contain
+# the same financial data plus encrypted Plaid tokens.
+backups/
+
 # Editor/OS
 .DS_Store
 .vscode/

@@ -321,6 +321,35 @@ or major change — it's the SQLite file (charges, categories, Plaid
 items/accounts/balances) plus `settings.json`, restorable from the same
 Settings page.
 
+### Automated backups
+
+Downloading from Settings only happens when someone remembers to. `backup.sh`
+automates the same thing on a schedule — it reads straight from
+`~/ledger/user_data` on the host (no API key needed, works even if the app
+container is down), writes a timestamped zip in the same format the Settings
+download produces, and rotates old ones. Install it with cron on the EC2 host:
+
+```bash
+crontab -e
+# Daily at 3:10am server time, keeping the last 14 backups:
+10 3 * * * cd ~/ledger && BACKUP_KEEP=14 ./backup.sh >> ~/ledger/backup.log 2>&1
+```
+
+Backups land in `~/ledger/backups/` (gitignored — never committed). This
+protects against "forgot to click download" and in-app data loss (a bad
+restore, an accidental reset) — it does **not** protect against losing the
+EC2 instance/volume itself. For that, pair it with an EBS snapshot schedule
+(AWS Backup, or a snapshot Lambda) or set `BACKUP_S3_BUCKET` (requires the
+`aws` CLI and credentials on the host) so each run also copies offsite:
+
+```bash
+BACKUP_S3_BUCKET=your-bucket-name ./backup.sh
+```
+
+Tested locally against dummy data (zip contents + rotation both verified);
+not yet installed on the real EC2 host or exercised against a real restore
+— worth doing both once this ships.
+
 ### Local dev vs production
 
 | | Local (`run.bat` / `run.sh`) | Production (EC2) |
