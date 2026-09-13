@@ -2,6 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Color tokens as CSS custom properties (R G B triples, no commas — the
+ * format Tailwind's `rgb(var(--x) / <alpha-value>)` pattern in
+ * tailwind.config.js expects so opacity modifiers like `bg-accent/50` keep
+ * working). Every existing `bg-canvas` / `text-ink-900` / etc. utility class
+ * resolves through these, so dark mode needed no changes anywhere else in
+ * the app — just a second set of values, swapped in by the `.dark` class
+ * that utils/theme.js and index.html's pre-paint bootstrap script apply to
+ * <html>.
+ */
+:root {
+  --color-canvas: 245 245 241;
+  --color-surface: 255 255 255;
+
+  --color-ink-900: 31 36 33;
+  --color-ink-700: 60 68 64;
+  --color-ink-500: 107 117 111;
+  --color-ink-300: 168 176 170;
+
+  --color-accent: 42 111 106;
+  --color-accent-dark: 30 81 77;
+  --color-accent-light: 228 239 238;
+
+  --color-good: 63 140 95;
+  --color-warn: 199 144 46;
+  --color-over: 180 72 59;
+
+  --color-line: 228 227 220;
+
+  --scrollbar-thumb: #c9cfc9;
+}
+
+:root.dark {
+  /* Values chosen and checked against WCAG contrast ratios (see the
+     project's dark-mode work notes) rather than eyeballed: every text
+     pairing below clears 4.5:1 against the surface/canvas it's meant to
+     sit on. line/surface and surface/canvas run lower (~1.4-1.7:1) —
+     accepted deliberately, since card elevation here comes from
+     shadow-card/shadow-cardHover, not border contrast; a harsher hairline
+     would look out of place against how subtle those borders are in light
+     mode too. */
+  --color-canvas: 13 21 19;
+  --color-surface: 36 52 48;
+
+  --color-ink-900: 237 239 234;
+  --color-ink-700: 185 194 188;
+  --color-ink-500: 143 155 149;
+  --color-ink-300: 95 108 102;
+
+  /* accent-dark is the *higher-contrast* accent variant everywhere it's
+     used (button hover, chip text on accent-light) — on a dark surface
+     that means brighter, not literally darker, or it would lose contrast
+     against the same surface it's meant to stand out on. accent itself is
+     kept dark enough that white button text (bg-accent + text-white,
+     used throughout) still clears 4.5:1. */
+  --color-accent: 40 128 121;
+  --color-accent-dark: 125 205 195;
+  --color-accent-light: 34 60 57;
+
+  --color-good: 106 191 138;
+  --color-warn: 224 172 92;
+  --color-over: 214 124 108;
+
+  --color-line: 68 86 80;
+
+  --scrollbar-thumb: #4a5b56;
+}
+
 html,
 body {
   height: 100%;
@@ -9,11 +77,12 @@ body {
 
 body {
   @apply bg-canvas text-ink-900 font-body antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #c9cfc9 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .tabular {

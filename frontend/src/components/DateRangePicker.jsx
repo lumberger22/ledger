@@ -20,7 +20,7 @@ export default function DateRangePicker({
   const invalid = Boolean(start) && Boolean(end) && start > end;
 
   return (
-    <div className="absolute z-20 top-full mt-2 right-0 bg-white rounded-xl shadow-lg border border-line p-4 w-72">
+    <div className="absolute z-20 top-full mt-2 right-0 bg-surface rounded-xl shadow-lg border border-line p-4 w-72">
       <div className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-ink-500 font-medium">Start date</span>

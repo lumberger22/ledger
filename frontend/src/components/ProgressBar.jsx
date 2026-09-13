@@ -1,7 +1,12 @@
+// CSS variable references (not hex literals) so the status color tracks
+// light/dark automatically — this is set as an inline style below (recharts
+// aside, this is a plain div), and `var()` inside an inline style resolves
+// against the current cascade just like it would in a stylesheet, class
+// toggle included.
 const statusColor = {
-  on_track: "#3F8C5F",
-  behind: "#C7902E",
-  over: "#B4483B",
+  on_track: "rgb(var(--color-good))",
+  behind: "rgb(var(--color-warn))",
+  over: "rgb(var(--color-over))",
 };
 
 export default function ProgressBar({

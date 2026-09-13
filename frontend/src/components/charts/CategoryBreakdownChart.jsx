@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useChartTheme } from "../../utils/chartTheme";
 
 const FALLBACK_COLORS = [
   "#2A6F6A",
@@ -35,6 +36,7 @@ function useIsMobile() {
 
 export default function CategoryBreakdownChart({ data, currency = "USD" }) {
   const isMobile = useIsMobile();
+  const chartTheme = useChartTheme();
   if (!data?.length) return null;
 
   const chartData = data.map((d, i) => ({
@@ -65,10 +67,14 @@ export default function CategoryBreakdownChart({ data, currency = "USD" }) {
           }
           contentStyle={{
             borderRadius: 10,
-            border: "1px solid #E4E3DC",
+            border: `1px solid ${chartTheme.tooltipBorder}`,
+            backgroundColor: chartTheme.tooltipBg,
+            color: chartTheme.tooltipText,
             fontSize: 13,
             fontFamily: "Inter",
           }}
+          itemStyle={{ color: chartTheme.tooltipText }}
+          labelStyle={{ color: chartTheme.tooltipText }}
         />
         <Legend
           verticalAlign={isMobile ? "bottom" : "middle"}
@@ -79,7 +85,7 @@ export default function CategoryBreakdownChart({ data, currency = "USD" }) {
           wrapperStyle={{
             fontSize: 12.5,
             fontFamily: "Inter",
-            color: "#3C4440",
+            color: chartTheme.legendText,
           }}
         />
       </PieChart>

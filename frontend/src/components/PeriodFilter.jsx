@@ -46,7 +46,7 @@ export default function PeriodFilter({
               }}
               className={`px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
                 isActive
-                  ? "bg-white text-ink-900 shadow-sm"
+                  ? "bg-surface text-ink-900 shadow-sm"
                   : "text-ink-500 hover:text-ink-900"
               }`}
             >

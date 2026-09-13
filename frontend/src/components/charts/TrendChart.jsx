@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { useChartTheme } from "../../utils/chartTheme";
 
 function formatMonth(m) {
   const [y, mo] = m.split("-");
@@ -15,6 +16,7 @@ function formatMonth(m) {
 }
 
 export default function TrendChart({ data }) {
+  const chartTheme = useChartTheme();
   if (!data?.length) return null;
   const chartData = data.map((d) => ({ ...d, label: formatMonth(d.month) }));
 
@@ -30,15 +32,15 @@ export default function TrendChart({ data }) {
             <stop offset="100%" stopColor="#2A6F6A" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid vertical={false} stroke="#E4E3DC" />
+        <CartesianGrid vertical={false} stroke={chartTheme.grid} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 12, fill: "#6B756F", fontFamily: "Inter" }}
+          tick={{ fontSize: 12, fill: chartTheme.axisText, fontFamily: "Inter" }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 12, fill: "#6B756F", fontFamily: "Inter" }}
+          tick={{ fontSize: 12, fill: chartTheme.axisText, fontFamily: "Inter" }}
           axisLine={false}
           tickLine={false}
           width={48}
@@ -50,10 +52,14 @@ export default function TrendChart({ data }) {
           ]}
           contentStyle={{
             borderRadius: 10,
-            border: "1px solid #E4E3DC",
+            border: `1px solid ${chartTheme.tooltipBorder}`,
+            backgroundColor: chartTheme.tooltipBg,
+            color: chartTheme.tooltipText,
             fontSize: 13,
             fontFamily: "Inter",
           }}
+          itemStyle={{ color: chartTheme.tooltipText }}
+          labelStyle={{ color: chartTheme.tooltipText }}
         />
         <Area
           type="monotone"

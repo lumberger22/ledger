@@ -285,7 +285,7 @@ export default function Budget() {
                     : 0
                 }
                 status="on_track"
-                color="#2A6F6A"
+                color="rgb(var(--color-accent))"
                 height={8}
               />
               <div className="flex items-center justify-between gap-2 flex-wrap mt-2.5">

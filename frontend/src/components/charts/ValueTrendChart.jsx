@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { useChartTheme } from "../../utils/chartTheme";
 
 function formatDate(d) {
   const date = new Date(`${d}T00:00:00`);
@@ -25,6 +26,7 @@ function formatTick(v) {
 // connected/synced, so a freshly-connected account shows a single point
 // until more days of syncing build up a real trend.
 export default function ValueTrendChart({ data, dataKey = "value", color = "#2A6F6A", label = "Value" }) {
+  const chartTheme = useChartTheme();
   if (!data?.length) return null;
   const chartData = data.map((d) => ({ ...d, label: formatDate(d.date) }));
   const gradientId = `valueTrendFill-${dataKey}`;
@@ -38,15 +40,15 @@ export default function ValueTrendChart({ data, dataKey = "value", color = "#2A6
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid vertical={false} stroke="#E4E3DC" />
+        <CartesianGrid vertical={false} stroke={chartTheme.grid} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 12, fill: "#6B756F", fontFamily: "Inter" }}
+          tick={{ fontSize: 12, fill: chartTheme.axisText, fontFamily: "Inter" }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 12, fill: "#6B756F", fontFamily: "Inter" }}
+          tick={{ fontSize: 12, fill: chartTheme.axisText, fontFamily: "Inter" }}
           axisLine={false}
           tickLine={false}
           width={56}
@@ -59,10 +61,14 @@ export default function ValueTrendChart({ data, dataKey = "value", color = "#2A6
           ]}
           contentStyle={{
             borderRadius: 10,
-            border: "1px solid #E4E3DC",
+            border: `1px solid ${chartTheme.tooltipBorder}`,
+            backgroundColor: chartTheme.tooltipBg,
+            color: chartTheme.tooltipText,
             fontSize: 13,
             fontFamily: "Inter",
           }}
+          itemStyle={{ color: chartTheme.tooltipText }}
+          labelStyle={{ color: chartTheme.tooltipText }}
         />
         <Area
           type="monotone"

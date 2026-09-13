@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { useChartTheme } from "../../utils/chartTheme";
 
 function formatMonth(m) {
   const [y, mo] = m.split("-");
@@ -23,6 +24,7 @@ const money = (value) =>
   })}`;
 
 export default function IncomeTrendChart({ data }) {
+  const chartTheme = useChartTheme();
   if (!data?.length) return null;
   const chartData = data.map((d) => ({ ...d, label: formatMonth(d.month) }));
 
@@ -38,15 +40,15 @@ export default function IncomeTrendChart({ data }) {
             <stop offset="100%" stopColor="#2A6F6A" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid vertical={false} stroke="#E4E3DC" />
+        <CartesianGrid vertical={false} stroke={chartTheme.grid} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 12, fill: "#6B756F", fontFamily: "Inter" }}
+          tick={{ fontSize: 12, fill: chartTheme.axisText, fontFamily: "Inter" }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 12, fill: "#6B756F", fontFamily: "Inter" }}
+          tick={{ fontSize: 12, fill: chartTheme.axisText, fontFamily: "Inter" }}
           axisLine={false}
           tickLine={false}
           width={48}
@@ -55,12 +57,18 @@ export default function IncomeTrendChart({ data }) {
           formatter={(value, name) => [money(value), name]}
           contentStyle={{
             borderRadius: 10,
-            border: "1px solid #E4E3DC",
+            border: `1px solid ${chartTheme.tooltipBorder}`,
+            backgroundColor: chartTheme.tooltipBg,
+            color: chartTheme.tooltipText,
             fontSize: 13,
             fontFamily: "Inter",
           }}
+          itemStyle={{ color: chartTheme.tooltipText }}
+          labelStyle={{ color: chartTheme.tooltipText }}
         />
-        <Legend wrapperStyle={{ fontSize: 12, fontFamily: "Inter" }} />
+        <Legend
+          wrapperStyle={{ fontSize: 12, fontFamily: "Inter", color: chartTheme.legendText }}
+        />
         <Area
           type="monotone"
           dataKey="gross"

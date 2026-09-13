@@ -138,7 +138,7 @@ export default function NetWorth() {
             data={history}
             dataKey="net_worth"
             label="Net Worth"
-            color={isPositive ? "#2A6F6A" : "#B4483B"}
+            color={isPositive ? "rgb(var(--color-accent))" : "rgb(var(--color-over))"}
           />
         </div>
       )}

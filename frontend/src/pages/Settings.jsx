@@ -7,6 +7,9 @@ import {
   FolderOpen,
   PiggyBank,
   ScanFace,
+  Sun,
+  Moon,
+  MonitorSmartphone,
 } from "lucide-react";
 import {
   getSettings,
@@ -16,6 +19,7 @@ import {
   resetAllData,
 } from "../api/settings";
 import { getBudget, updateBudget } from "../api/budget";
+import { applyTheme, setStoredTheme } from "../utils/theme";
 import {
   isFaceIdAvailable,
   isFaceIdEnabled,
@@ -73,6 +77,20 @@ export default function Settings() {
     await updateSettings(settings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  }
+
+  // Applies immediately (no need to hit the main Save button below) since
+  // this is a live display preference, not draft form data — matches how
+  // a theme toggle behaves in virtually every other app. Persisted to the
+  // backend best-effort in the background; the visual change (and the
+  // localStorage copy theme-init.js reads on the next load) has already
+  // happened either way.
+  function handleThemeChange(value) {
+    const next = { ...settings, theme: value };
+    setSettings(next);
+    applyTheme(value);
+    setStoredTheme(value);
+    updateSettings(next).catch(() => {});
   }
 
   async function handleRestore(e) {
@@ -142,6 +160,34 @@ export default function Settings() {
           {faceIdError && <p className="text-sm text-over">{faceIdError}</p>}
         </section>
       )}
+
+      <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-3">
+        <p className="font-display font-semibold text-ink-900 flex items-center gap-2">
+          <Sun size={16} className="text-accent" /> Appearance
+        </p>
+        <div className="inline-flex items-center bg-black/[0.04] rounded-lg p-1 gap-0.5">
+          {[
+            { value: "light", label: "Light", Icon: Sun },
+            { value: "dark", label: "Dark", Icon: Moon },
+            { value: "system", label: "System", Icon: MonitorSmartphone },
+          ].map(({ value, label, Icon }) => (
+            <button
+              key={value}
+              onClick={() => handleThemeChange(value)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                settings.theme === value
+                  ? "bg-surface text-ink-900 shadow-sm"
+                  : "text-ink-500 hover:text-ink-900"
+              }`}
+            >
+              <Icon size={14} /> {label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-ink-500">
+          "System" follows your device's light/dark setting automatically.
+        </p>
+      </section>
 
       <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-4">
         <p className="font-display font-semibold text-ink-900 flex items-center gap-2">
