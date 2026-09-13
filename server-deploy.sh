@@ -6,6 +6,19 @@ cd ~/ledger
 echo "==> Pulling latest code..."
 git pull
 
+echo "==> Preserving previous image as ledger:prev (for rollback)..."
+# Tag whatever's currently "ledger:latest" as "ledger:prev" *before*
+# rebuilding overwrites that tag. Lets a bad deploy be undone with
+# ./rollback.sh instead of manual git/image archaeology. A no-op (with a
+# note, not an error) on the very first deploy, when no ledger image exists
+# yet.
+if docker image inspect ledger:latest > /dev/null 2>&1; then
+    docker tag ledger:latest ledger:prev
+    echo "    Tagged current ledger:latest as ledger:prev."
+else
+    echo "    No existing ledger:latest image — nothing to preserve (first deploy?)."
+fi
+
 echo "==> Building Docker image..."
 docker build -t ledger .
 

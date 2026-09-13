@@ -299,6 +299,21 @@ SSHes to the EC2 instance and runs `server-deploy.sh` there, which rebuilds
 and restarts the Docker container. The persistent volume at `DATA_DIR`
 (containing `charges.db` and `settings.json`) survives redeploys.
 
+Before rebuilding, `server-deploy.sh` tags whatever's currently running as
+`ledger:prev`, so a bad deploy can be undone in one command instead of
+tracking down the last good commit by hand:
+
+```bash
+ssh -i ~/Downloads/ledger-server.pem ubuntu@<host> "cd ~/ledger && ./rollback.sh"
+```
+
+`rollback.sh` restarts the container from `ledger:prev` — it only rolls
+back the running container/image, not the git checkout, so if the bad
+deploy also needs its source reverted, do that separately before the next
+`./server-deploy.sh` run (otherwise it'll just redeploy the same bad build
+over the rollback). There's nothing to roll back to until at least two
+deploys have happened.
+
 ### Backing up before a risky change
 
 Download a backup from **Settings → Download Backup** before any migration
