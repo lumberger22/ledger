@@ -48,8 +48,7 @@ from config import (
 )
 
 # A single, fixed client_user_id is fine here — Ledger is single-user by
-# design (see PLAID_INTEGRATION_PLAN.md), so there's only ever one "user"
-# from Plaid's point of view.
+# design, so there's only ever one "user" from Plaid's point of view.
 CLIENT_USER_ID = "ledger-owner"
 
 logger = logging.getLogger("ledger")

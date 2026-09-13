@@ -5,8 +5,12 @@ backend/.pytest_cache/
 backend/**/__pycache__/
 *.pyc
 
-# Node
-frontend/node_modules/
+# Node — bare pattern (no leading slash) matches node_modules/ at any
+# depth, so this also covers frontend/node_modules/. The root-level
+# node_modules/ (from package.json's concurrently/prettier devDependencies)
+# was previously committed by mistake — 2,657 files, untracked in the same
+# change that added this.
+node_modules/
 frontend/dist/
 
 # User data (personal financial data - never commit this)

@@ -179,8 +179,7 @@ encrypted Plaid access tokens.
 Ledger uses [Plaid](https://plaid.com)'s free Trial plan (10 connected
 Items, uncapped API calls per Item) to pull live balances and transactions
 from Wells Fargo, Fidelity, Charles Schwab, and other supported
-institutions. See `PLAID_INTEGRATION_PLAN.md` at the repo root for the full
-design/rationale; this section is just the setup steps.
+institutions. This section covers the setup steps below.
 
 ### 1. Get Plaid credentials
 
