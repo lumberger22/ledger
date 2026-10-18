@@ -33,6 +33,15 @@
 
   --scrollbar-thumb: #c9cfc9;
 
+  /* Deliberately pure black rather than --color-ink-900 (a dark charcoal,
+     #1F2421) — form-field text specifically was still reading as too light
+     at ink-900's contrast, so it gets its own, darker token instead of
+     changing ink-900 itself (which backs every heading/paragraph in the
+     app). Dark mode keeps the already-fixed near-white value below —
+     literal black there would recreate the white-on-white bug this is a
+     follow-up to, just inverted. */
+  --color-input-text: 0 0 0;
+
   /* Tells the browser which native-chrome variant (form control
      backgrounds, the date-input calendar icon, default scrollbars) to
      render. Without this, native inputs/selects always render with their
@@ -77,6 +86,8 @@
   --color-line: 68 86 80;
 
   --scrollbar-thumb: #4a5b56;
+
+  --color-input-text: 237 239 234;
 
   color-scheme: dark;
 }
@@ -128,7 +139,8 @@ select:focus-visible {
   input,
   select,
   textarea {
-    @apply bg-surface text-ink-900 border-line;
+    @apply bg-surface border-line;
+    color: rgb(var(--color-input-text));
   }
 
   input::placeholder,
@@ -142,6 +154,7 @@ select:focus-visible {
      color-scheme above, since native dropdown-list rendering is the one
      part of this that varies most across browsers/OSes. */
   select option {
-    @apply bg-surface text-ink-900;
+    @apply bg-surface;
+    color: rgb(var(--color-input-text));
   }
 }
