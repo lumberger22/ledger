@@ -32,6 +32,15 @@
   --color-line: 228 227 220;
 
   --scrollbar-thumb: #c9cfc9;
+
+  /* Tells the browser which native-chrome variant (form control
+     backgrounds, the date-input calendar icon, default scrollbars) to
+     render. Without this, native inputs/selects always render with their
+     light-mode UA default regardless of our own .dark class — that's
+     exactly how the white-on-white bug happened: our text color (inherited
+     from body) followed the theme, but unstyled native backgrounds didn't,
+     because nothing had told the browser a dark scheme was active. */
+  color-scheme: light;
 }
 
 :root.dark {
@@ -68,6 +77,8 @@
   --color-line: 68 86 80;
 
   --scrollbar-thumb: #4a5b56;
+
+  color-scheme: dark;
 }
 
 html,
@@ -98,4 +109,39 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible {
   @apply focus-ring;
+}
+
+/*
+ * Form controls, explicitly — the bug this fixes: no <input>/<select>/
+ * <textarea> anywhere in the app sets its own background color, so every
+ * one of them was rendering the browser's native (always-light) default —
+ * a white box — while its *text* color came from body's inherited
+ * text-ink-900, which the .dark class turns near-white. Fine in light
+ * mode (dark text on that same white box); invisible in dark mode (near-
+ * white text on that same white box). @layer base keeps this below any
+ * component's own utility classes in specificity, so e.g. an input that
+ * already sets bg-surface or border-line explicitly still wins — this
+ * only fills in what was previously unstyled (which, before this fix, was
+ * every single one of them).
+ */
+@layer base {
+  input,
+  select,
+  textarea {
+    @apply bg-surface text-ink-900 border-line;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-ink-500;
+    opacity: 1;
+  }
+
+  /* Most browsers that respect background-color/color on <select> also
+     apply them to its <option> list — belt-and-suspenders alongside
+     color-scheme above, since native dropdown-list rendering is the one
+     part of this that varies most across browsers/OSes. */
+  select option {
+    @apply bg-surface text-ink-900;
+  }
 }
