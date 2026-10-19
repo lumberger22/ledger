@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { todayIso, formatShortDate } from "./date";
+import { todayIso, formatShortDate, formatMonthShort, formatMonthYear } from "./date";
 
 describe("todayIso", () => {
   it("returns today's local calendar date as YYYY-MM-DD", () => {
@@ -29,5 +29,35 @@ describe("formatShortDate", () => {
     expect(formatShortDate("")).toBe("");
     expect(formatShortDate(null)).toBe("");
     expect(formatShortDate(undefined)).toBe("");
+  });
+});
+
+describe("formatMonthShort", () => {
+  it("formats a YYYY-MM string as a short month name", () => {
+    expect(formatMonthShort("2026-05")).toBe("May");
+  });
+
+  it("does not shift the month across a UTC day boundary", () => {
+    // Same regression class as formatShortDate: "YYYY-MM-01" parsed as UTC
+    // midnight can display the *previous* month in timezones behind UTC.
+    expect(formatMonthShort("2026-01")).toBe("Jan");
+  });
+
+  it("returns an empty string for missing or malformed input", () => {
+    expect(formatMonthShort("")).toBe("");
+    expect(formatMonthShort(null)).toBe("");
+    expect(formatMonthShort(undefined)).toBe("");
+  });
+});
+
+describe("formatMonthYear", () => {
+  it("formats a YYYY-MM string as a full month name and year", () => {
+    expect(formatMonthYear("2026-05")).toBe("May 2026");
+  });
+
+  it("returns an empty string for missing or malformed input", () => {
+    expect(formatMonthYear("")).toBe("");
+    expect(formatMonthYear(null)).toBe("");
+    expect(formatMonthYear(undefined)).toBe("");
   });
 });

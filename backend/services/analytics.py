@@ -361,17 +361,26 @@ def category_budget_variance_history(conn, categories, months_back=6):
                      AND amount < 0 AND category_id = ?""",
                 (start, end, cat_id),
             ).fetchone()
-            spent = row["total"] or 0
+            spent = round(row["total"] or 0, 2)
+            variance = round(spent - budget, 2)
             status = (
                 "over" if spent > budget else "under" if spent < budget else "on_budget"
             )
-            statuses.append({"month": f"{yy:04d}-{mm:02d}", "status": status})
+            statuses.append(
+                {
+                    "month": f"{yy:04d}-{mm:02d}",
+                    "status": status,
+                    "spent": spent,
+                    "variance": variance,
+                }
+            )
         meta = meta_by_id[cat_id]
         result.append(
             {
                 "category_id": cat_id,
                 "name": meta.get("name", cat_id),
                 "color": meta.get("color"),
+                "budget": round(budget, 2),
                 "months": statuses,
             }
         )

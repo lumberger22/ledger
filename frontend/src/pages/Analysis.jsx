@@ -20,6 +20,7 @@ import CategoryBadge from "../components/CategoryBadge";
 import CategoryBreakdownChart from "../components/charts/CategoryBreakdownChart";
 import TrendChart from "../components/charts/TrendChart";
 import EmptyState from "../components/EmptyState";
+import { formatMonthShort, formatMonthYear } from "../utils/date";
 
 /**
  * NEW OPTIONAL FIELDS EXPECTED ON `data` (from getAnalysis):
@@ -57,7 +58,13 @@ import EmptyState from "../components/EmptyState";
  *   category_id: string,
  *   name: string,
  *   color?: string,
- *   months: Array<{ month: string, status: "over" | "under" | "on_budget" }>,
+ *   budget: number,          // monthly target for this category
+ *   months: Array<{
+ *     month: string,           // "YYYY-MM"
+ *     status: "over" | "under" | "on_budget",
+ *     spent: number,           // amount spent that month
+ *     variance: number,        // spent - budget (positive = over, negative = under)
+ *   }>,
  * }>
  *   Ordered oldest -> newest, powers the streak view.
  */
@@ -381,13 +388,24 @@ function BudgetStreakCard({ history }) {
     return { status: last, count };
   };
 
+  const barTooltip = (m) => {
+    const variance = m.variance ?? 0;
+    const varianceLabel =
+      variance > 0
+        ? `${currency(variance)} over budget`
+        : variance < 0
+          ? `${currency(Math.abs(variance))} under budget`
+          : "on budget";
+    return `${formatMonthYear(m.month)}: ${currency(m.spent ?? 0)} spent — ${varianceLabel}`;
+  };
+
   return (
-    <ul className="space-y-3.5">
+    <ul className="space-y-5">
       {history.map((cat) => {
         const streak = streakFor(cat.months);
         return (
           <li key={cat.category_id}>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center justify-between mb-1">
               <CategoryBadge name={cat.name} color={cat.color} />
               {streak && (
                 <span
@@ -403,13 +421,23 @@ function BudgetStreakCard({ history }) {
                 </span>
               )}
             </div>
+            <p className="text-xs text-ink-500 mb-2">
+              {currency(cat.budget)} budgeted / month
+            </p>
             <div className="flex gap-1">
               {cat.months.map((m, i) => (
-                <span
+                <div
                   key={i}
-                  title={`${m.month}: ${m.status.replace("_", " ")}`}
-                  className={`h-2.5 flex-1 rounded-sm ${dotClass(m.status)}`}
-                />
+                  title={barTooltip(m)}
+                  className="flex-1 flex flex-col items-center gap-1 cursor-default"
+                >
+                  <span
+                    className={`h-2.5 w-full rounded-sm ${dotClass(m.status)}`}
+                  />
+                  <span className="text-[10px] text-ink-500">
+                    {formatMonthShort(m.month)}
+                  </span>
+                </div>
               ))}
             </div>
           </li>

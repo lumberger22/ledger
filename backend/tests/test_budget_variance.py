@@ -8,6 +8,9 @@ history yet": the function looked for a category's budget under the keys
 actually stored (and returned by categories_store.list_categories()) with
 the field "monthly_target" — so no category ever matched and the history
 was always empty.
+
+Also covers the per-month spend/variance figures and the category-level
+budget figure added for the card's richer hover tooltip and header line.
 """
 
 from datetime import date
@@ -52,25 +55,43 @@ def test_category_with_a_set_target_appears_in_history(db_conn):
 
     assert len(history) == 1
     assert history[0]["category_id"] == "groceries"
+    assert history[0]["budget"] == 400
     assert history[0]["months"][-1]["status"] == "under"
 
 
-def test_spend_over_target_is_flagged_over(db_conn):
+def test_spend_over_target_is_flagged_over_with_positive_variance(db_conn):
     categories = [_category("dining", 150)]
     _insert_charge(db_conn, _this_month_day(), -200, "dining")
 
     history = category_budget_variance_history(db_conn, categories)
+    latest = history[0]["months"][-1]
 
-    assert history[0]["months"][-1]["status"] == "over"
+    assert latest["status"] == "over"
+    assert latest["spent"] == 200
+    assert latest["variance"] == 50
 
 
-def test_spend_equal_to_target_is_on_budget(db_conn):
+def test_spend_under_target_has_negative_variance(db_conn):
+    categories = [_category("dining", 150)]
+    _insert_charge(db_conn, _this_month_day(), -90, "dining")
+
+    history = category_budget_variance_history(db_conn, categories)
+    latest = history[0]["months"][-1]
+
+    assert latest["status"] == "under"
+    assert latest["spent"] == 90
+    assert latest["variance"] == -60
+
+
+def test_spend_equal_to_target_is_on_budget_with_zero_variance(db_conn):
     categories = [_category("subscriptions", 50)]
     _insert_charge(db_conn, _this_month_day(), -50, "subscriptions")
 
     history = category_budget_variance_history(db_conn, categories)
+    latest = history[0]["months"][-1]
 
-    assert history[0]["months"][-1]["status"] == "on_budget"
+    assert latest["status"] == "on_budget"
+    assert latest["variance"] == 0
 
 
 def test_category_with_no_target_set_is_excluded(db_conn):
@@ -98,8 +119,11 @@ def test_pending_charges_do_not_count_as_spend(db_conn):
     _insert_charge(db_conn, _this_month_day(), -500, "travel", status="pending")
 
     history = category_budget_variance_history(db_conn, categories)
+    latest = history[0]["months"][-1]
 
-    assert history[0]["months"][-1]["status"] == "under"
+    assert latest["status"] == "under"
+    assert latest["spent"] == 0
+    assert latest["variance"] == -200
 
 
 def test_history_covers_six_months_by_default(db_conn):
@@ -108,3 +132,6 @@ def test_history_covers_six_months_by_default(db_conn):
     history = category_budget_variance_history(db_conn, categories)
 
     assert len(history[0]["months"]) == 6
+    for entry in history[0]["months"]:
+        assert entry["spent"] == 0
+        assert entry["variance"] == -400

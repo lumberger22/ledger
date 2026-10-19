@@ -17,3 +17,19 @@ export function formatShortDate(iso) {
   const date = new Date(y, m - 1, d);
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
+
+export function formatMonthShort(yearMonth) {
+  if (!yearMonth) return "";
+  const [y, m] = yearMonth.split("-").map(Number);
+  if (!y || !m) return "";
+  const date = new Date(y, m - 1, 1);
+  return date.toLocaleDateString("en-US", { month: "short" });
+}
+
+export function formatMonthYear(yearMonth) {
+  if (!yearMonth) return "";
+  const [y, m] = yearMonth.split("-").map(Number);
+  if (!y || !m) return "";
+  const date = new Date(y, m - 1, 1);
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
