@@ -326,10 +326,18 @@ def category_budget_variance_history(conn, categories, months_back=6):
     months.reverse()
     budget_by_id, meta_by_id = {}, {}
     for cat in categories:
+        if cat.get("archived"):
+            continue
         value = next(
             (
                 cat.get(k)
-                for k in ("budget", "monthly_budget", "budget_amount", "limit")
+                for k in (
+                    "monthly_target",
+                    "budget",
+                    "monthly_budget",
+                    "budget_amount",
+                    "limit",
+                )
                 if cat.get(k) is not None
             ),
             None,
@@ -338,7 +346,7 @@ def category_budget_variance_history(conn, categories, months_back=6):
             value = float(value) if value is not None else None
         except (TypeError, ValueError):
             value = None
-        if value is not None and value >= 0:
+        if value is not None and value > 0:
             budget_by_id[cat["id"]] = value
             meta_by_id[cat["id"]] = cat
     result = []
