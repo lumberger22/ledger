@@ -7,7 +7,6 @@ import {
   Repeat,
   Store,
   Gauge,
-  Calendar,
   Receipt,
   Flame,
   ChevronDown,
@@ -36,13 +35,6 @@ import { formatMonthShort, formatMonthYear } from "../utils/date";
  * }>
  *   6 months of per-category totals, powers the multi-line trend chart.
  *   Category name/color are looked up from data.category_breakdown.
- *
- * data.day_of_week_breakdown?: Array<{
- *   day: "Sun" | "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat",
- *   total: number,
- * }>
- *   One entry per day of week (any order; sorted client-side), all charges
- *   in the current period.
  *
  * data.biggest_charges?: Array<{
  *   id: string,
@@ -81,7 +73,6 @@ const PERIOD_OPTIONS = [
   { value: "ytd", label: "YTD" },
 ];
 
-const DAY_ORDER = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const DEFAULT_PALETTE = [
   "#6366f1",
@@ -237,75 +228,6 @@ function CategoryTrendCard({ categoryTrend, categoryBreakdown }) {
             {s.name}
           </span>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function DayOfWeekCard({ dayOfWeekBreakdown }) {
-  if (!dayOfWeekBreakdown || dayOfWeekBreakdown.length === 0) {
-    return (
-      <p className="text-sm text-ink-500 py-10 text-center">
-        Not enough data yet to break down by day.
-      </p>
-    );
-  }
-
-  const byDay = DAY_ORDER.map((day) => {
-    const entry = dayOfWeekBreakdown.find((d) => d.day === day);
-    return { day, total: entry?.total ?? 0 };
-  });
-
-  const maxVal = Math.max(1, ...byDay.map((d) => d.total));
-  const weekendTotal = byDay
-    .filter((d) => d.day === "Sat" || d.day === "Sun")
-    .reduce((sum, d) => sum + d.total, 0);
-  const weekdayTotal = byDay
-    .filter((d) => d.day !== "Sat" && d.day !== "Sun")
-    .reduce((sum, d) => sum + d.total, 0);
-  const total = weekendTotal + weekdayTotal;
-  const weekendPct = total ? (weekendTotal / total) * 100 : 0;
-
-  return (
-    <div>
-      <div className="flex items-end gap-2 h-32 mb-2">
-        {byDay.map((d) => {
-          const isWeekend = d.day === "Sat" || d.day === "Sun";
-          const heightPct = (d.total / maxVal) * 100;
-          return (
-            <div
-              key={d.day}
-              className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end"
-            >
-              <div
-                className={`w-full rounded-t-md ${isWeekend ? "bg-accent" : "bg-ink-300"}`}
-                style={{ height: `${Math.max(heightPct, 2)}%` }}
-                title={`${d.day}: ${currency(d.total)}`}
-              />
-              <span className="text-[11px] text-ink-500 font-medium">
-                {d.day}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex items-center justify-between text-sm pt-3 border-t border-line mt-3">
-        <span className="flex items-center gap-1.5 text-ink-700">
-          <span className="w-2 h-2 rounded-full bg-accent" /> Weekend
-          <span className="tabular font-medium text-ink-900 ml-1">
-            {currency(weekendTotal)}
-          </span>
-        </span>
-        <span className="flex items-center gap-1.5 text-ink-700">
-          <span className="w-2 h-2 rounded-full bg-ink-300" /> Weekday
-          <span className="tabular font-medium text-ink-900 ml-1">
-            {currency(weekdayTotal)}
-          </span>
-        </span>
-        <span className="text-xs text-ink-500 tabular">
-          {Math.round(weekendPct)}% on weekends
-        </span>
       </div>
     </div>
   );
@@ -560,18 +482,6 @@ function CategoryTrendSection({ data, className = "" }) {
   );
 }
 
-function DayOfWeekSection({ data, className = "" }) {
-  return (
-    <AnalysisCard
-      title="Spend by Day of Week"
-      icon={Calendar}
-      className={className}
-    >
-      <DayOfWeekCard dayOfWeekBreakdown={data.day_of_week_breakdown} />
-    </AnalysisCard>
-  );
-}
-
 function TopSpendingSourcesCard({ data, showAllSources, onToggle }) {
   const visibleSources = showAllSources
     ? data.top_merchants
@@ -726,9 +636,13 @@ function PaceProjectionCard({ data, className = "" }) {
   );
 }
 
-function BudgetVarianceCard({ data }) {
+function BudgetVarianceCard({ data, className = "" }) {
   return (
-    <AnalysisCard title="Budget Variance History" icon={Flame}>
+    <AnalysisCard
+      title="Budget Variance History"
+      icon={Flame}
+      className={className}
+    >
       <BudgetStreakCard history={data.budget_variance_history} />
     </AnalysisCard>
   );
@@ -752,24 +666,20 @@ function AnalysisContent({ data, totalMomPct }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-        <TopSpendingSourcesCard
-          data={data}
-          showAllSources={showAllSources}
-          onToggle={() => setShowAllSources((value) => !value)}
-        />
-        <BiggestChargesSection data={data} />
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
-        {/* Left side */}
-        <PaceProjectionCard data={data} className="lg:col-span-2" />
-
-        {/* Right side */}
-        <div className="lg:col-span-3 space-y-5">
-          <DayOfWeekSection data={data} />
-          <BudgetVarianceCard data={data} />
+        {/* Left column: same width Pace Projection used to occupy on its own */}
+        <div className="lg:col-span-2 space-y-5">
+          <BiggestChargesSection data={data} />
+          <TopSpendingSourcesCard
+            data={data}
+            showAllSources={showAllSources}
+            onToggle={() => setShowAllSources((value) => !value)}
+          />
+          <PaceProjectionCard data={data} />
         </div>
+
+        {/* Right column: fills the rest of the row's width */}
+        <BudgetVarianceCard data={data} className="lg:col-span-3" />
       </div>
     </div>
   );
