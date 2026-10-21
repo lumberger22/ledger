@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   TrendingUp,
@@ -283,7 +283,32 @@ function BiggestChargesCard({ charges, categoryBreakdown }) {
 }
 
 function BudgetStreakCard({ history }) {
-  const [expandedMonth, setExpandedMonth] = useState(null);
+  const [activeMonth, setActiveMonth] = useState(null);
+  const monthControlsRef = useRef(null);
+
+  useEffect(() => {
+    if (!activeMonth) return undefined;
+
+    const dismissOnOutsideClick = (event) => {
+      if (!monthControlsRef.current?.contains(event.target)) {
+        setActiveMonth(null);
+      }
+    };
+    const dismissOnScroll = () => setActiveMonth(null);
+    const dismissOnEscape = (event) => {
+      if (event.key === "Escape") setActiveMonth(null);
+    };
+
+    document.addEventListener("pointerdown", dismissOnOutsideClick);
+    document.addEventListener("scroll", dismissOnScroll, true);
+    document.addEventListener("keydown", dismissOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", dismissOnOutsideClick);
+      document.removeEventListener("scroll", dismissOnScroll, true);
+      document.removeEventListener("keydown", dismissOnEscape);
+    };
+  }, [activeMonth]);
+
   if (!history || history.length === 0) {
     return (
       <p className="text-sm text-ink-500 py-10 text-center">
@@ -299,6 +324,13 @@ function BudgetStreakCard({ history }) {
         ? "bg-emerald-400"
         : "bg-ink-300";
 
+  const varianceLabel = (variance) =>
+    variance > 0
+      ? `${currency(variance)} over budget`
+      : variance < 0
+        ? `${currency(Math.abs(variance))} under budget`
+        : "on budget";
+
   const streakFor = (months) => {
     if (!months || months.length === 0) return null;
     const last = months[months.length - 1].status;
@@ -313,17 +345,11 @@ function BudgetStreakCard({ history }) {
 
   const barTooltip = (m) => {
     const variance = m.variance ?? 0;
-    const varianceLabel =
-      variance > 0
-        ? `${currency(variance)} over budget`
-        : variance < 0
-          ? `${currency(Math.abs(variance))} under budget`
-          : "on budget";
-    return `${formatMonthYear(m.month)}: ${currency(m.spent ?? 0)} spent — ${varianceLabel}`;
+    return `${formatMonthYear(m.month)}: ${currency(m.spent ?? 0)} spent — ${varianceLabel(variance)}`;
   };
 
   return (
-    <ul className="space-y-5">
+    <ul className="space-y-5" ref={monthControlsRef}>
       {history.map((cat) => {
         const streak = streakFor(cat.months);
         return (
@@ -350,27 +376,66 @@ function BudgetStreakCard({ history }) {
             <div className="flex gap-1">
               {cat.months.map((m, i) => {
                 const monthKey = `${cat.category_id}-${i}`;
-                const isExpanded = expandedMonth === monthKey;
+                const isActive = activeMonth?.key === monthKey;
+                const variance = m.variance ?? 0;
                 return (
-                <button
-                  key={i}
-                  type="button"
-                  title={barTooltip(m)}
-                  aria-label={barTooltip(m)}
-                  aria-expanded={isExpanded}
-                  onClick={() => setExpandedMonth(isExpanded ? null : monthKey)}
-                  className="flex-1 flex flex-col items-center gap-1 cursor-pointer rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-500"
-                >
-                  <span
-                    className={`h-2.5 w-full rounded-sm ${dotClass(m.status)}`}
-                  />
-                  <span className="text-[10px] text-ink-500">
-                    {formatMonthShort(m.month)}
-                  </span>
-                  <span className={`${isExpanded ? "" : "hidden"} text-[10px] text-ink-600 text-center`}>
-                    {barTooltip(m)}
-                  </span>
-                </button>
+                  <div className="min-w-0 flex-1" key={i}>
+                    <button
+                      type="button"
+                      aria-label={barTooltip(m)}
+                      aria-expanded={isActive}
+                      aria-haspopup="dialog"
+                      onClick={(event) => {
+                        if (isActive) {
+                          setActiveMonth(null);
+                          return;
+                        }
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        setActiveMonth({
+                          key: monthKey,
+                          x: Math.max(144, Math.min(window.innerWidth - 144, rect.left + rect.width / 2)),
+                          y: rect.top - 8,
+                          month: formatMonthYear(m.month),
+                          spent: currency(m.spent ?? 0),
+                          variance: varianceLabel(variance),
+                          status: m.status,
+                        });
+                      }}
+                      className="flex w-full flex-col items-center gap-1 cursor-pointer rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-500"
+                    >
+                      <span
+                        className={`h-2.5 w-full rounded-sm ${dotClass(m.status)}`}
+                      />
+                      <span className="text-[10px] text-ink-500">
+                        {formatMonthShort(m.month)}
+                      </span>
+                    </button>
+                    {isActive && (
+                      <div
+                        role="dialog"
+                        aria-label={`${activeMonth.month} budget details`}
+                        className="fixed z-50 w-72 max-w-[calc(100vw-1rem)] -translate-x-1/2 -translate-y-full rounded-lg border border-line bg-surface px-3 py-2 text-xs text-ink-700 shadow-lg"
+                        style={{ left: activeMonth.x, top: activeMonth.y }}
+                      >
+                        <p className="font-medium text-ink-900">{activeMonth.month}</p>
+                        <p className="mt-1">{activeMonth.spent} spent</p>
+                        <p className={`mt-1 flex items-center gap-1 font-medium ${
+                          activeMonth.status === "over"
+                            ? "text-rose-600"
+                            : activeMonth.status === "under"
+                              ? "text-emerald-600"
+                              : "text-ink-500"
+                        }`}>
+                          {activeMonth.status === "over" ? (
+                            <TrendingUp size={13} aria-hidden="true" />
+                          ) : activeMonth.status === "under" ? (
+                            <TrendingDown size={13} aria-hidden="true" />
+                          ) : null}
+                          {activeMonth.variance}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
