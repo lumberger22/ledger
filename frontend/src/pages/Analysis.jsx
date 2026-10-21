@@ -73,7 +73,7 @@ const compactCurrency = (n) =>
   `$${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const PERIOD_OPTIONS = [
-  { value: "custom", label: "Select Timeframe" },
+  { value: "custom", label: "Custom" },
   { value: "30d", label: "30 Days" },
   { value: "ytd", label: "YTD" },
 ];
@@ -859,10 +859,11 @@ function AnalysisContent({
             <>
             <Link
               to="/budget"
-              className="flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold text-ink-700 hover:bg-black/5"
+              title="Budget"
+              aria-label="Budget"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-ink-700 hover:bg-black/5"
             >
-              <PiggyBank size={13} />
-              Budget
+              <PiggyBank size={16} />
             </Link>
             <PeriodFilter
               value={period}
@@ -874,10 +875,11 @@ function AnalysisContent({
             <button
               type="button"
               onClick={onToggleEdit}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold text-ink-700 hover:bg-black/5"
+              title={editing ? "Done customizing" : "Customize page"}
+              aria-label={editing ? "Done customizing" : "Customize page"}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-ink-700 hover:bg-black/5"
             >
-              {editing ? <Check size={15} /> : <Pencil size={15} />}
-              {editing ? "Done" : "Customize"}
+              {editing ? <Check size={16} /> : <Pencil size={16} />}
             </button>
             </>
           }

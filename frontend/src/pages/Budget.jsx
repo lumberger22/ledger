@@ -203,10 +203,11 @@ export default function Budget() {
           <div className="flex w-full flex-nowrap items-center justify-between gap-2 sm:w-auto sm:justify-start">
             <Link
               to="/analysis"
-              className="hidden min-h-11 items-center gap-1.5 rounded-lg border border-line p-2 text-sm font-semibold text-ink-700 hover:bg-black/5 sm:inline-flex sm:px-3 sm:py-1.5"
+              title="Analysis"
+              aria-label="Analysis"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-ink-700 hover:bg-black/5"
             >
-              <LineChart size={13} />
-              <span className="hidden sm:inline">Analysis</span>
+              <LineChart size={16} />
             </Link>
             <PeriodFilter
               value={period}
@@ -220,10 +221,9 @@ export default function Budget() {
                 onClick={startEditing}
                 title="Edit Budget"
                 aria-label="Edit Budget"
-                className="flex h-11 w-11 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent/30 p-2 text-sm font-semibold text-accent hover:bg-accent-light sm:w-auto sm:px-3 sm:py-1.5"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/30 text-accent hover:bg-accent-light"
               >
-                <Pencil size={13} />
-                <span className="hidden sm:inline">Edit Budget</span>
+                <Pencil size={16} />
               </button>
             )}
           </div>
