@@ -164,7 +164,7 @@ export default function Dashboard() {
                 <span className="text-sm tabular text-ink-500">of {currency(data.budget_summary.total_target)}</span>
               </div>
             </div>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status.bg} ${status.color}`}>{status.label}</span>
+            <span className={`inline-flex min-h-7 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-center text-xs font-semibold leading-none ${status.bg} ${status.color}`}>{status.label}</span>
           </div>
           <div className="mb-6 h-2.5 w-full overflow-hidden rounded-full bg-black/[0.06]">
             <div

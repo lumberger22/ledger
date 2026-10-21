@@ -11,6 +11,7 @@ import { todayIso } from "../utils/date";
 export default function DateRangePicker({
   initialStart,
   initialEnd,
+  position,
   onApply,
   onCancel,
 }) {
@@ -20,7 +21,10 @@ export default function DateRangePicker({
   const invalid = Boolean(start) && Boolean(end) && start > end;
 
   return (
-    <div className="absolute z-20 top-full mt-2 right-0 bg-surface rounded-xl shadow-lg border border-line p-4 w-72">
+    <div
+      className="fixed z-40 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-line bg-surface p-4 shadow-lg"
+      style={{ left: position?.left ?? 16, top: position?.top ?? 16 }}
+    >
       <div className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-ink-500 font-medium">Start date</span>

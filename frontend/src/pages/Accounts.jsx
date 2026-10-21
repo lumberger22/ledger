@@ -89,7 +89,7 @@ export default function Accounts() {
     try {
       const [itemsRes, accountsRes] = await Promise.all([
         listPlaidItems(),
-        listAccounts(),
+        listAccounts(true),
       ]);
       setItems(itemsRes.items);
       setManualAccounts(accountsRes.accounts.filter((a) => a.is_manual));
@@ -554,14 +554,21 @@ export default function Accounts() {
                         {a.name}
                       </p>
                       <p className="text-xs text-ink-500">{a.type}</p>
+                      {a.is_hidden && (
+                        <p className="mt-0.5 text-[11px] font-medium text-warn">
+                          Hidden from totals
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-medium tabular text-ink-900">
                         {currency(a.current_balance)}
                       </span>
                       <button
+                        type="button"
                         onClick={() => handleHideManual(a.id, !a.is_hidden)}
                         title={a.is_hidden ? "Unhide" : "Hide"}
+                        aria-label={a.is_hidden ? "Include in totals" : "Hide from totals"}
                         className="p-1.5 rounded-md text-ink-500 hover:bg-black/5"
                       >
                         {a.is_hidden ? <EyeOff size={14} /> : <Eye size={14} />}

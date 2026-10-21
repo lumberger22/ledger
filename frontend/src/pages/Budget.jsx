@@ -38,7 +38,7 @@ const signedCurrency = (n) => (
   </span>
 );
 const PERIODS = [
-  { value: "custom", label: "Select Timeframe" },
+  { value: "custom", label: "Custom" },
   { value: "30d", label: "30 Days" },
   { value: "3month_avg", label: "3-Month Avg" },
 ];
@@ -200,10 +200,10 @@ export default function Budget() {
         title="Budget"
         eyebrow="Plan & track"
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-nowrap items-center justify-between gap-2 sm:w-auto sm:justify-start">
             <Link
               to="/analysis"
-              className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 p-2 sm:px-3 sm:py-1.5 rounded-lg"
+              className="hidden min-h-11 items-center gap-1.5 rounded-lg border border-line p-2 text-sm font-semibold text-ink-700 hover:bg-black/5 sm:inline-flex sm:px-3 sm:py-1.5"
             >
               <LineChart size={13} />
               <span className="hidden sm:inline">Analysis</span>
@@ -220,7 +220,7 @@ export default function Budget() {
                 onClick={startEditing}
                 title="Edit Budget"
                 aria-label="Edit Budget"
-                className="flex items-center gap-1.5 text-sm font-semibold text-accent border border-accent/30 hover:bg-accent-light p-2 sm:px-3 sm:py-1.5 rounded-lg"
+                className="flex h-11 w-11 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent/30 p-2 text-sm font-semibold text-accent hover:bg-accent-light sm:w-auto sm:px-3 sm:py-1.5"
               >
                 <Pencil size={13} />
                 <span className="hidden sm:inline">Edit Budget</span>

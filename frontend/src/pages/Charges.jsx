@@ -334,21 +334,26 @@ export default function Charges() {
             className="min-h-11 text-sm rounded-xl border border-line pl-9 pr-3 w-full sm:w-56"
           />
         </div>
-        <input
-          type="date"
-          aria-label="Filter charges from date"
-          value={start}
-          onChange={(e) => setStart(e.target.value)}
-          className="min-h-11 w-full text-sm rounded-xl border border-line px-2.5 sm:w-auto"
-        />
-        <span className="hidden text-center text-ink-300 text-sm sm:inline">–</span>
-        <input
-          type="date"
-          aria-label="Filter charges through date"
-          value={end}
-          onChange={(e) => setEnd(e.target.value)}
-          className="min-h-11 w-full text-sm rounded-xl border border-line px-2.5 sm:w-auto"
-        />
+        <label className="col-span-2 min-w-0 text-xs font-medium text-ink-500 sm:col-span-1 sm:w-36">
+          <span className="mb-1 block">From date</span>
+          <input
+            type="date"
+            aria-label="Filter charges from date"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            className="min-h-11 w-full min-w-0 rounded-xl border border-line px-2.5 text-sm"
+          />
+        </label>
+        <label className="col-span-2 min-w-0 text-xs font-medium text-ink-500 sm:col-span-1 sm:w-36">
+          <span className="mb-1 block">To date</span>
+          <input
+            type="date"
+            aria-label="Filter charges through date"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            className="min-h-11 w-full min-w-0 rounded-xl border border-line px-2.5 text-sm"
+          />
+        </label>
 
         <div className="col-span-2 flex min-w-0 items-center gap-2 overflow-x-auto border-t border-line pt-2 sm:col-span-full sm:flex-wrap sm:overflow-visible">
           <span className="shrink-0 text-xs font-medium text-ink-500">Date range</span>

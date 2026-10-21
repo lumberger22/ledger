@@ -22,6 +22,30 @@ export default function PeriodFilter({
   onCustomRange,
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerPosition, setPickerPosition] = useState(null);
+
+  function togglePicker(event) {
+    if (pickerOpen) {
+      setPickerOpen(false);
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const pickerWidth = Math.min(288, Math.max(0, window.innerWidth - 32));
+    const pickerHeight = 300;
+    const left = Math.min(
+      Math.max(16, rect.left),
+      Math.max(16, window.innerWidth - pickerWidth - 16),
+    );
+    const below = rect.bottom + 8;
+    const top =
+      below + pickerHeight <= window.innerHeight - 16
+        ? below
+        : Math.max(16, rect.top - pickerHeight - 8);
+
+    setPickerPosition({ left, top });
+    setPickerOpen(true);
+  }
 
   return (
     <div className="relative inline-flex max-w-full">
@@ -36,9 +60,9 @@ export default function PeriodFilter({
           return (
             <button
               key={opt.value}
-              onClick={() => {
+              onClick={(event) => {
                 if (isCustom) {
-                  setPickerOpen((v) => !v);
+                  togglePicker(event);
                   return;
                 }
                 setPickerOpen(false);
@@ -59,6 +83,7 @@ export default function PeriodFilter({
         <DateRangePicker
           initialStart={customRange?.start}
           initialEnd={customRange?.end}
+          position={pickerPosition}
           onApply={(start, end) => {
             setPickerOpen(false);
             onCustomRange?.(start, end);

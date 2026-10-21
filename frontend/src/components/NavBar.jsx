@@ -24,6 +24,13 @@ const navItems = [
   { to: "/accounts", label: "Accounts", icon: Landmark },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
+const mobileNavItems = [
+  navItems[0],
+  navItems[2],
+  navItems[1],
+  navItems[3],
+  navItems[4],
+];
 
 export default function NavBar({ onLogout }) {
   const { open } = useUploadModal();
@@ -96,7 +103,7 @@ export default function NavBar({ onLogout }) {
         className="fixed inset-x-0 bottom-0 z-30 border-t border-line/90 bg-surface/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl md:hidden"
       >
         <div className="mx-auto grid max-w-xl grid-cols-5 px-1 pt-1">
-          {navItems.map(({ to, label, icon: Icon }) => (
+          {mobileNavItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
