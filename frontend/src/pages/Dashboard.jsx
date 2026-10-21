@@ -305,14 +305,14 @@ export default function Dashboard() {
           <PageHeader
             title="Dashboard"
             eyebrow="Your overview"
+            className="!flex-row !items-center !justify-between gap-2"
             actions={
-              <div className="flex min-w-0 items-center gap-2">
-              <div className="min-w-0 flex-1 sm:flex-none">
+              <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
+              <div className="shrink-0">
                 <PeriodFilter value={period} onChange={setPeriod} options={PERIOD_OPTIONS} customRange={customRange} onCustomRange={(start, end) => setCustomRange({ start, end })} />
               </div>
-              <button type="button" onClick={onToggleEdit} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-line px-3 text-sm font-semibold text-ink-700 hover:bg-black/5">
-                {editing ? <Check size={15} /> : <Pencil size={15} />}
-                {editing ? "Done" : "Customize"}
+              <button type="button" onClick={onToggleEdit} title={editing ? "Done customizing" : "Customize dashboard"} aria-label={editing ? "Done customizing" : "Customize dashboard"} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line text-ink-700 hover:bg-black/5">
+                {editing ? <Check size={16} /> : <Pencil size={16} />}
               </button>
               </div>
             }
