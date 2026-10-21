@@ -321,7 +321,7 @@ export default function Charges() {
         </form>
       )}
 
-      <div className="bg-surface border border-line rounded-xl2 shadow-card p-3 sm:p-4 grid grid-cols-2 items-center gap-3 sm:flex sm:flex-wrap sm:gap-2.5">
+      <div className="min-w-0 bg-surface border border-line rounded-xl2 shadow-card p-3 sm:p-4 grid grid-cols-2 items-center gap-3 sm:flex sm:flex-wrap sm:gap-2.5">
         <div className="relative col-span-2 w-full sm:col-span-1 sm:w-auto">
           <Search
             size={14}
@@ -334,24 +334,24 @@ export default function Charges() {
             className="min-h-11 text-sm rounded-xl border border-line pl-9 pr-3 w-full sm:w-56"
           />
         </div>
-        <label className="col-span-2 min-w-0 text-xs font-medium text-ink-500 sm:col-span-1 sm:w-36">
+        <label className="col-span-2 block w-full min-w-0 max-w-full text-xs font-medium text-ink-500 sm:col-span-1 sm:w-36">
           <span className="mb-1 block">From date</span>
           <input
             type="date"
             aria-label="Filter charges from date"
             value={start}
             onChange={(e) => setStart(e.target.value)}
-            className="min-h-11 w-full min-w-0 rounded-xl border border-line px-2.5 text-sm"
+            className="box-border block min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line px-2.5 text-sm"
           />
         </label>
-        <label className="col-span-2 min-w-0 text-xs font-medium text-ink-500 sm:col-span-1 sm:w-36">
+        <label className="col-span-2 block w-full min-w-0 max-w-full text-xs font-medium text-ink-500 sm:col-span-1 sm:w-36">
           <span className="mb-1 block">To date</span>
           <input
             type="date"
             aria-label="Filter charges through date"
             value={end}
             onChange={(e) => setEnd(e.target.value)}
-            className="min-h-11 w-full min-w-0 rounded-xl border border-line px-2.5 text-sm"
+            className="box-border block min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line px-2.5 text-sm"
           />
         </label>
 
