@@ -27,11 +27,15 @@ import {
   disableFaceId,
 } from "../api/webauthn";
 import { Link } from "react-router-dom";
+import PageHeader from "../components/PageHeader";
+import PageLoading from "../components/PageLoading";
 
 export default function Settings() {
   const [settings, setSettings] = useState(null);
   const [budget, setBudget] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [resetConfirming, setResetConfirming] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -74,9 +78,17 @@ export default function Settings() {
   }
 
   async function handleSave() {
-    await updateSettings(settings);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaving(true);
+    setSaveError("");
+    try {
+      await updateSettings(settings);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setSaveError(err.message || "Couldn't save settings. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   // Applies immediately (no need to hit the main Save button below) since
@@ -123,12 +135,12 @@ export default function Settings() {
   }
 
   if (loading || !settings) {
-    return <p className="text-sm text-ink-500">Loading…</p>;
+    return <PageLoading label="Loading settings" />;
   }
 
   return (
     <div className="space-y-5 max-w-2xl">
-      <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Settings</h1>
+      <PageHeader title="Settings" eyebrow="Preferences" />
 
       {faceIdAvailable && (
         <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-3">
@@ -325,12 +337,15 @@ export default function Settings() {
         </Link>
       </section>
 
-      <div className="flex items-center gap-3">
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-4 flex items-center gap-3 border-y border-line bg-surface/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
         <button
           onClick={handleSave}
-          className="flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+          disabled={saving}
+          className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-dark sm:w-auto"
         >
-          {saved ? (
+          {saving ? (
+            "Saving…"
+          ) : saved ? (
             <>
               <Check size={15} /> Saved
             </>
@@ -339,6 +354,7 @@ export default function Settings() {
           )}
         </button>
       </div>
+      {saveError && <p role="alert" className="text-sm text-over">{saveError}</p>}
 
       <section className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6 space-y-3">
         <p className="font-display font-semibold text-ink-900">

@@ -1,23 +1,24 @@
 export default function CategoryBadge({ name, color, muted = false }) {
   if (!name) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium text-ink-500 bg-black/5 border border-dashed border-ink-300">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-ink-300 bg-canvas px-2.5 py-1 text-xs font-semibold text-ink-500">
         Uncategorized
       </span>
     );
   }
+  const badgeColor = color || "#64748b";
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium"
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
       style={{
-        backgroundColor: muted ? "transparent" : `${color}1A`,
-        color: color || "#6B756F",
-        border: muted ? `1px solid ${color || "#A8B0AA"}` : "none",
+        backgroundColor: muted ? "transparent" : `${badgeColor}1A`,
+        color: badgeColor,
+        border: muted ? `1px solid ${badgeColor}` : "none",
       }}
     >
       <span
-        className="w-1.5 h-1.5 rounded-full"
-        style={{ backgroundColor: color || "#A8B0AA" }}
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: badgeColor }}
       />
       {name}
     </span>

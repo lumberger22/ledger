@@ -24,6 +24,7 @@ import EmptyState from "../components/EmptyState";
 import PeriodFilter from "../components/PeriodFilter";
 import { formatShortDate } from "../utils/date";
 import { activeTargetTotal, isOverAllocated as computeOverAllocated } from "../utils/budget";
+import PageHeader from "../components/PageHeader";
 
 const currency = (n) =>
   `$${(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -65,6 +66,7 @@ export default function Budget() {
   const [draftCategories, setDraftCategories] = useState([]);
   const [draftIncome, setDraftIncome] = useState("");
   const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -148,14 +150,22 @@ export default function Budget() {
     }
 
     setSaveError(null);
-    await updateBudget({
-      categories: draftCategories.map((c) => ({
-        ...c,
-        monthly_target: parseFloat(c.monthly_target) || 0,
-      })),
-      income,
-    });
+    setSaving(true);
+    try {
+      await updateBudget({
+        categories: draftCategories.map((c) => ({
+          ...c,
+          monthly_target: parseFloat(c.monthly_target) || 0,
+        })),
+        income,
+      });
+    } catch (err) {
+      setSaveError(err.message || "Couldn't save your budget. Please try again.");
+      setSaving(false);
+      return;
+    }
     setEditing(false);
+    setSaving(false);
     load();
   }
 
@@ -186,36 +196,39 @@ export default function Budget() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Budget</h1>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/analysis"
-            className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 p-2 sm:px-3 sm:py-1.5 rounded-lg"
-          >
-            <LineChart size={13} />
-            <span className="hidden sm:inline">Analysis</span>
-          </Link>
-          <PeriodFilter
-            value={period}
-            onChange={setPeriod}
-            options={PERIODS}
-            customRange={customRange}
-            onCustomRange={(start, end) => setCustomRange({ start, end })}
-          />
-          {!editing && (
-            <button
-              onClick={startEditing}
-              title="Edit Budget"
-              aria-label="Edit Budget"
-              className="flex items-center gap-1.5 text-sm font-semibold text-accent border border-accent/30 hover:bg-accent-light p-2 sm:px-3 sm:py-1.5 rounded-lg"
+      <PageHeader
+        title="Budget"
+        eyebrow="Plan & track"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/analysis"
+              className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 p-2 sm:px-3 sm:py-1.5 rounded-lg"
             >
-              <Pencil size={13} />
-              <span className="hidden sm:inline">Edit Budget</span>
-            </button>
-          )}
-        </div>
-      </div>
+              <LineChart size={13} />
+              <span className="hidden sm:inline">Analysis</span>
+            </Link>
+            <PeriodFilter
+              value={period}
+              onChange={setPeriod}
+              options={PERIODS}
+              customRange={customRange}
+              onCustomRange={(start, end) => setCustomRange({ start, end })}
+            />
+            {!editing && (
+              <button
+                onClick={startEditing}
+                title="Edit Budget"
+                aria-label="Edit Budget"
+                className="flex items-center gap-1.5 text-sm font-semibold text-accent border border-accent/30 hover:bg-accent-light p-2 sm:px-3 sm:py-1.5 rounded-lg"
+              >
+                <Pencil size={13} />
+                <span className="hidden sm:inline">Edit Budget</span>
+              </button>
+            )}
+          </div>
+        }
+      />
 
       {status &&
         (() => {
@@ -382,7 +395,7 @@ export default function Budget() {
             </p>
           )}
 
-          <div className="flex items-center gap-2 justify-end pt-2 border-t border-line">
+          <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-4 flex items-center justify-end gap-2 border-y border-line bg-surface/95 px-4 py-3 pt-2 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
             <button
               onClick={() => setEditing(false)}
               className="flex items-center gap-1 text-sm font-medium text-ink-500 px-3 py-1.5 rounded-lg hover:bg-black/5"
@@ -391,10 +404,10 @@ export default function Budget() {
             </button>
             <button
               onClick={saveBudget}
-              disabled={overAllocated}
+              disabled={overAllocated || saving}
               className="flex items-center gap-1 text-sm font-semibold text-white bg-accent hover:bg-accent-dark disabled:opacity-40 px-3.5 py-1.5 rounded-lg"
             >
-              <Check size={14} /> Save
+              <Check size={14} /> {saving ? "Saving…" : "Save"}
             </button>
           </div>
         </div>

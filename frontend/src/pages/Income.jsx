@@ -17,6 +17,8 @@ import PaystubUploadModal from "../components/PaystubUploadModal";
 import PaystubReviewModal from "../components/PaystubReviewModal";
 import EmptyState from "../components/EmptyState";
 import { formatShortDate } from "../utils/date";
+import PageHeader from "../components/PageHeader";
+import PageLoading from "../components/PageLoading";
 
 const currency = (n) =>
   `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -188,15 +190,11 @@ export default function Income() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
-            Income
-          </h1>
-          <p className="text-sm text-ink-500 mt-1">
-            See how every paycheck is earned, withheld, saved, and distributed.
-          </p>
-        </div>
+      <PageHeader
+        title="Income"
+        eyebrow="Paychecks"
+        description="See how every paycheck is earned, withheld, saved, and distributed."
+        actions={
         <div className="flex items-center gap-2">
           <div className="inline-flex items-center gap-1.5 bg-black/[0.04] rounded-lg px-3 py-1.5 text-sm font-medium text-ink-900 whitespace-nowrap">
             <Calendar size={14} className="text-ink-500 shrink-0" />
@@ -218,10 +216,11 @@ export default function Income() {
             <span className="hidden sm:inline">Upload Payslip</span>
           </button>
         </div>
-      </div>
+        }
+      />
 
       {loading && !data ? (
-        <p className="text-sm text-ink-500">Loading…</p>
+        <PageLoading label="Loading income" />
       ) : !hasData ? (
         <div className="bg-surface border border-line rounded-xl2 shadow-card">
           <EmptyState

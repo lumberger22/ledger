@@ -24,8 +24,8 @@ export default function PeriodFilter({
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <div className="relative inline-flex">
-      <div className="inline-flex items-center bg-black/[0.04] rounded-lg p-1 gap-0.5 overflow-x-auto max-w-full">
+    <div className="relative inline-flex max-w-full">
+      <div className="inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-xl border border-line/80 bg-canvas p-1">
         {options.map((opt) => {
           const isCustom = opt.value === "custom";
           const isActive = value === opt.value;
@@ -44,10 +44,10 @@ export default function PeriodFilter({
                 setPickerOpen(false);
                 onChange(opt.value);
               }}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`min-h-11 whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
                 isActive
-                  ? "bg-surface text-ink-900 shadow-sm"
-                  : "text-ink-500 hover:text-ink-900"
+                  ? "bg-surface text-ink-900 shadow-sm ring-1 ring-black/[0.04]"
+                  : "text-ink-500 hover:bg-surface/70 hover:text-ink-900"
               }`}
             >
               {label}

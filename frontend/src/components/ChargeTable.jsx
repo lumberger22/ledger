@@ -91,6 +91,7 @@ export default function ChargeTable({
             <select
               value={sort}
               onChange={(e) => onSortChange(e.target.value)}
+              aria-label="Sort charges by"
               className="text-sm rounded-md border border-line px-2 py-1 flex-1"
             >
               {sortOptions.map((o) => (
@@ -102,6 +103,7 @@ export default function ChargeTable({
             <button
               type="button"
               onClick={() => onSortChange(sort)}
+              aria-label={`Reverse ${sort} sort direction`}
               title="Reverse sort direction"
               className="p-1.5 rounded-md border border-line text-ink-500 hover:bg-black/5"
             >
@@ -113,7 +115,7 @@ export default function ChargeTable({
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {charges.map((charge) => {
             const isEditing = editingId === charge.id;
             const cat = categoryMap[charge.category_id];
@@ -122,7 +124,7 @@ export default function ChargeTable({
               return (
                 <div
                   key={charge.id}
-                  className="rounded-xl border border-line bg-accent-light/40 p-3 space-y-2.5"
+                  className="rounded-2xl border border-accent/30 bg-accent-light/30 p-4 space-y-3"
                 >
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -196,7 +198,7 @@ export default function ChargeTable({
             return (
               <div
                 key={charge.id}
-                className="rounded-xl border border-line p-3 flex items-start gap-3"
+                className="rounded-2xl border border-line bg-surface p-4 flex items-start gap-3 shadow-sm"
               >
                 {selectable && (
                   <input
@@ -204,13 +206,13 @@ export default function ChargeTable({
                     checked={selectedIds?.has(charge.id) || false}
                     onChange={() => onToggleSelect?.(charge.id)}
                     aria-label={`Select charge ${charge.source}`}
-                    className="mt-1 shrink-0"
+                    className="mt-1 h-5 w-5 shrink-0 accent-accent"
                   />
                 )}
                 <div className="flex-1 flex items-start justify-between gap-3 min-w-0">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium text-ink-900 truncate">
+                      <p className="text-[15px] font-semibold text-ink-900 truncate">
                         {charge.source}
                       </p>
                       {charge.recurring ? (
@@ -222,30 +224,34 @@ export default function ChargeTable({
                         {charge.nickname}
                       </p>
                     )}
-                    <p className="text-xs text-ink-500 tabular mt-0.5">{charge.date}</p>
-                    <div className="mt-1.5">
+                    <p className="text-xs text-ink-500 tabular mt-1">{charge.date}</p>
+                    <div className="mt-2">
                       <CategoryBadge name={cat?.name} color={cat?.color} />
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <div className="flex flex-col items-end gap-2 shrink-0">
                     <span
-                      className={`text-sm font-medium tabular whitespace-nowrap ${
+                      className={`text-base font-semibold tabular whitespace-nowrap ${
                         charge.amount < 0 ? "text-ink-900" : "text-good"
                       }`}
                     >
                       {currency(charge.amount)}
                     </span>
                     {editable && (
-                      <div className="flex items-center gap-0.5">
+                      <div className="flex items-center gap-1">
                         <button
+                          type="button"
+                          aria-label={`Edit ${charge.source}`}
                           onClick={() => startEdit(charge)}
-                          className="p-1.5 rounded-md text-ink-500 hover:bg-black/5"
+                          className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-500 hover:bg-black/5"
                         >
                           <Pencil size={14} />
                         </button>
                         <button
+                          type="button"
+                          aria-label={`Delete ${charge.source}`}
                           onClick={() => onDelete(charge.id)}
-                          className="p-1.5 rounded-md text-over hover:bg-over/10"
+                          className="flex h-11 w-11 items-center justify-center rounded-xl text-over hover:bg-over/10"
                         >
                           <Trash2 size={14} />
                         </button>

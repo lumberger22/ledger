@@ -22,6 +22,8 @@ import CategoryBreakdownChart from "../components/charts/CategoryBreakdownChart"
 import TrendChart from "../components/charts/TrendChart";
 import EmptyState from "../components/EmptyState";
 import CustomizableCards from "../components/CustomizableCards";
+import PageHeader from "../components/PageHeader";
+import PageLoading from "../components/PageLoading";
 import { formatMonthShort, formatMonthYear } from "../utils/date";
 
 /**
@@ -118,6 +120,7 @@ function MoMBadge({ pct, size = "sm" }) {
 }
 
 function CategoryTrendCard({ categoryTrend, categoryBreakdown }) {
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState(null);
   if (!categoryTrend || categoryTrend.length === 0) {
     return (
       <p className="text-sm text-ink-500 py-10 text-center">
@@ -127,6 +130,7 @@ function CategoryTrendCard({ categoryTrend, categoryBreakdown }) {
   }
 
   const months = categoryTrend.map((m) => m.month);
+  const activeMonthIndex = selectedMonthIndex ?? months.length - 1;
   const categoryIds = Array.from(
     new Set(categoryTrend.flatMap((m) => Object.keys(m.categories || {}))),
   );
@@ -205,33 +209,69 @@ function CategoryTrendCard({ categoryTrend, categoryBreakdown }) {
             <g key={s.id}>
               <path d={d} fill="none" stroke={s.color} strokeWidth={2} />
               {s.data.map((v, i) => (
-                <circle
-                  key={i}
-                  cx={xFor(i)}
-                  cy={yFor(v)}
-                  r={2.5}
-                  fill={s.color}
-                />
+                <g key={i}>
+                  <circle
+                    cx={xFor(i)}
+                    cy={yFor(v)}
+                    r={activeMonthIndex === i ? 4 : 2.5}
+                    fill={s.color}
+                    pointerEvents="none"
+                  />
+                </g>
               ))}
             </g>
           );
         })}
+
+        {months.map((month, i) => {
+          const left = i === 0 ? padding.left : (xFor(i - 1) + xFor(i)) / 2;
+          const right = i === months.length - 1
+            ? width - padding.right
+            : (xFor(i) + xFor(i + 1)) / 2;
+          return (
+            <rect
+              key={`month-hit-${month}`}
+              x={left}
+              y={padding.top}
+              width={Math.max(1, right - left)}
+              height={innerH}
+              fill="transparent"
+              role="button"
+              tabIndex={0}
+              aria-pressed={activeMonthIndex === i}
+              aria-label={`Show ${formatMonthYear(month)} category totals`}
+              className="cursor-pointer outline-none focus-visible:stroke-accent focus-visible:stroke-2"
+              onClick={() => setSelectedMonthIndex(i)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setSelectedMonthIndex(i);
+                }
+              }}
+            />
+          );
+        })}
       </svg>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
-        {series.map((s) => (
-          <span
-            key={s.id}
-            className="inline-flex items-center gap-1.5 text-xs text-ink-700"
-          >
-            <span
-              className="w-2 h-2 rounded-full shrink-0"
-              style={{ backgroundColor: s.color }}
-            />
-            {s.name}
-          </span>
-        ))}
+      <div className="rounded-xl bg-canvas/70 p-3" aria-live="polite">
+        <p className="mb-2 text-xs font-semibold text-ink-900">
+          {formatMonthYear(months[activeMonthIndex])} · tap a chart point to inspect
+        </p>
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
+          {series.map((s) => (
+            <li key={s.id} className="flex min-w-0 items-center justify-between gap-2 text-xs">
+              <span className="flex min-w-0 items-center gap-1.5 text-ink-500">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
+                <span className="truncate">{s.name}</span>
+              </span>
+              <span className="shrink-0 font-medium tabular text-ink-900">
+                {currency(s.data[activeMonthIndex])}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
+
     </div>
   );
 }
@@ -812,11 +852,11 @@ function AnalysisContent({
         </p>
       )}
       renderToolbar={({ editing, onToggleEdit }) => (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">
-            Analysis
-          </h1>
-          <div className="flex flex-wrap items-center gap-2">
+        <PageHeader
+          title="Analysis"
+          eyebrow="Spending insights"
+          actions={
+            <>
             <Link
               to="/budget"
               className="flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold text-ink-700 hover:bg-black/5"
@@ -839,8 +879,9 @@ function AnalysisContent({
               {editing ? <Check size={15} /> : <Pencil size={15} />}
               {editing ? "Done" : "Customize"}
             </button>
-          </div>
-        </div>
+            </>
+          }
+        />
       )}
     />
   );
@@ -872,7 +913,7 @@ export default function Analysis() {
   }, [period, customRange.start, customRange.end]);
 
   if (loading && !data) {
-    return <p className="text-sm text-ink-500">Loading…</p>;
+    return <PageLoading label="Loading analysis" />;
   }
 
   const noData =

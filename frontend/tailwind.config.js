@@ -39,11 +39,11 @@ export default {
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
-        xl2: '1.1rem',
+        xl2: '0.9rem',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(31, 36, 33, 0.04), 0 4px 16px rgba(31, 36, 33, 0.05)',
-        cardHover: '0 2px 6px rgba(31, 36, 33, 0.06), 0 8px 24px rgba(31, 36, 33, 0.08)',
+        card: '0 1px 2px rgba(15, 23, 42, 0.035), 0 8px 24px rgba(15, 23, 42, 0.045)',
+        cardHover: '0 2px 5px rgba(15, 23, 42, 0.06), 0 12px 30px rgba(15, 23, 42, 0.09)',
       },
     },
   },

@@ -19,6 +19,8 @@ import PeriodFilter from "../components/PeriodFilter";
 import CategoryBadge from "../components/CategoryBadge";
 import EmptyState from "../components/EmptyState";
 import CustomizableCards from "../components/CustomizableCards";
+import PageHeader from "../components/PageHeader";
+import PageLoading from "../components/PageLoading";
 
 const currency = (n) =>
   `${n < 0 ? "-" : ""}$${Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -33,7 +35,7 @@ const statusCopy = {
 // is dropped from the dashboard specifically — both stay available on
 // other pages.
 const PERIOD_OPTIONS = [
-  { value: "custom", label: "Select Timeframe" },
+  { value: "custom", label: "Custom" },
   { value: "30d", label: "30 Days" },
 ];
 
@@ -105,7 +107,7 @@ export default function Dashboard() {
   }
 
   if (loading && !data) {
-    return <div className="text-ink-500 text-sm">Loading…</div>;
+    return <PageLoading label="Loading dashboard" />;
   }
 
   const hasNetWorthData =
@@ -153,12 +155,12 @@ export default function Dashboard() {
       id: "budget-summary",
       title: "Budget Summary",
       content: (
-        <section className={panelClass}>
+        <section className={`${panelClass} p-5 sm:p-6`}>
           <div className="mb-5 flex items-start justify-between gap-3">
             <div>
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-500">Spent vs Budgeted</p>
               <div className="flex flex-wrap items-baseline gap-2">
-                <span className="font-display text-3xl font-bold tabular text-ink-900">{currency(data.budget_summary.total_spent)}</span>
+                <span className="font-display text-3xl font-bold tabular tracking-tight text-ink-900 sm:text-4xl">{currency(data.budget_summary.total_spent)}</span>
                 <span className="text-sm tabular text-ink-500">of {currency(data.budget_summary.total_target)}</span>
               </div>
             </div>
@@ -169,6 +171,12 @@ export default function Dashboard() {
               className={`h-full rounded-full transition-all duration-700 ${data.budget_summary.status === "over" ? "bg-over" : data.budget_summary.status === "behind" ? "bg-warn" : "bg-accent"}`}
               style={{ width: `${spentPct}%` }}
             />
+          </div>
+          <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
+            <span className="text-ink-500">{data.budget_summary.status === "over" ? "Over budget" : "Remaining"}</span>
+            <span className={`font-semibold tabular ${data.budget_summary.status === "over" ? "text-over" : "text-ink-900"}`}>
+              {currency(Math.abs(data.budget_summary.total_target - data.budget_summary.total_spent))}
+            </span>
           </div>
           <Link to="/budget" className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-accent hover:text-accent-dark">
             View Budget <ArrowRight size={14} />
@@ -275,14 +283,17 @@ export default function Dashboard() {
       ),
     },
   ];
+  // Put the most actionable snapshot first in the default mobile scroll.
+  // Existing personal card orders are retained by CustomizableCards.
+  const dashboardCards = [cards[1], cards[0], ...cards.slice(2)];
 
   return (
     <div className="space-y-5">
       <CustomizableCards
         key={hasAnyData ? "dashboard-with-data" : "dashboard-empty"}
         pageId="dashboard"
-        cards={cards}
-        defaultVisible={hasAnyData ? cards.map((card) => card.id) : []}
+        cards={dashboardCards}
+        defaultVisible={hasAnyData ? dashboardCards.map((card) => card.id) : []}
         emptyState={hasAnyData ? (
           <p className="py-8 text-center text-sm text-ink-500">All cards are hidden. Use Customize to add one back.</p>
         ) : (
@@ -291,16 +302,21 @@ export default function Dashboard() {
           </div>
         )}
         renderToolbar={({ editing, onToggleEdit }) => (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">Dashboard</h1>
-            <div className="flex flex-wrap items-center gap-2">
-              <PeriodFilter value={period} onChange={setPeriod} options={PERIOD_OPTIONS} customRange={customRange} onCustomRange={(start, end) => setCustomRange({ start, end })} />
-              <button type="button" onClick={onToggleEdit} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold text-ink-700 hover:bg-black/5">
+          <PageHeader
+            title="Dashboard"
+            eyebrow="Your overview"
+            actions={
+              <div className="flex min-w-0 items-center gap-2">
+              <div className="min-w-0 flex-1 sm:flex-none">
+                <PeriodFilter value={period} onChange={setPeriod} options={PERIOD_OPTIONS} customRange={customRange} onCustomRange={(start, end) => setCustomRange({ start, end })} />
+              </div>
+              <button type="button" onClick={onToggleEdit} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-line px-3 text-sm font-semibold text-ink-700 hover:bg-black/5">
                 {editing ? <Check size={15} /> : <Pencil size={15} />}
                 {editing ? "Done" : "Customize"}
               </button>
-            </div>
-          </div>
+              </div>
+            }
+          />
         )}
       />
     </div>

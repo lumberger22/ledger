@@ -12,6 +12,8 @@ import { getInvestmentsSummary, getInvestmentsHistory } from "../api/investments
 import CategoryBreakdownChart from "../components/charts/CategoryBreakdownChart";
 import ValueTrendChart from "../components/charts/ValueTrendChart";
 import EmptyState from "../components/EmptyState";
+import PageHeader from "../components/PageHeader";
+import PageLoading from "../components/PageLoading";
 
 const currency = (n) =>
   `${n < 0 ? "-" : ""}$${Math.abs(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -61,12 +63,12 @@ export default function Investments() {
     setExpanded((prev) => ({ ...prev, [accountId]: prev[accountId] === false }));
   }
 
-  if (loading) return <p className="text-sm text-ink-500">Loading…</p>;
+  if (loading) return <PageLoading label="Loading investments" />;
 
   if (!summary || summary.accounts.length === 0) {
     return (
       <div className="space-y-5">
-        <h1 className="font-display font-bold text-2xl text-ink-900">Investments</h1>
+        <PageHeader title="Investments" eyebrow="Portfolio" />
         <div className="bg-surface border border-line rounded-xl2 shadow-card">
           <EmptyState
             icon={PieChart}
@@ -95,15 +97,16 @@ export default function Investments() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-2xl text-ink-900">Investments</h1>
-        <Link
+      <PageHeader
+        title="Investments"
+        eyebrow="Portfolio"
+        actions={<Link
           to="/accounts"
           className="text-sm font-semibold text-accent hover:text-accent-dark"
         >
           Manage Accounts →
-        </Link>
-      </div>
+        </Link>}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-5">

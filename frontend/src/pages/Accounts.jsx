@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import PageHeader from "../components/PageHeader";
+import PageLoading from "../components/PageLoading";
 import { usePlaidLink } from "react-plaid-link";
 import {
   Landmark,
@@ -254,16 +256,16 @@ export default function Accounts() {
     load();
   }
 
-  if (loading) return <p className="text-sm text-ink-500">Loading…</p>;
+  if (loading) return <PageLoading label="Loading accounts" />;
 
   const hasAnything = items.length > 0 || manualAccounts.length > 0;
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
-          Accounts
-        </h1>
+      <PageHeader
+        title="Accounts"
+        eyebrow="Connected money"
+        actions={
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2">
             <Link
@@ -312,7 +314,8 @@ export default function Accounts() {
             {connecting ? "Connecting…" : "Connect Account"}
           </button>
         </div>
-      </div>
+        }
+      />
 
       {error && (
         <div className="bg-over/5 border border-over/30 rounded-xl2 p-4 text-sm text-over flex items-center gap-2">

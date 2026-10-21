@@ -4,6 +4,8 @@ import { ArrowRight, TrendingUp, TrendingDown, Landmark } from "lucide-react";
 import { getNetWorth, getNetWorthHistory } from "../api/networth";
 import EmptyState from "../components/EmptyState";
 import ValueTrendChart from "../components/charts/ValueTrendChart";
+import PageHeader from "../components/PageHeader";
+import PageLoading from "../components/PageLoading";
 
 const currency = (n) =>
   `${n < 0 ? "-" : ""}$${Math.abs(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -61,7 +63,7 @@ export default function NetWorth() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-sm text-ink-500">Loading…</p>;
+  if (loading) return <PageLoading label="Loading net worth" />;
 
   const hasAnyAccounts =
     (data?.assets?.accounts?.length || 0) + (data?.liabilities?.accounts?.length || 0) > 0;
@@ -69,7 +71,7 @@ export default function NetWorth() {
   if (!hasAnyAccounts) {
     return (
       <div className="space-y-5">
-        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Net Worth</h1>
+        <PageHeader title="Net Worth" eyebrow="Financial position" />
         <div className="bg-surface border border-line rounded-xl2 shadow-card">
           <EmptyState
             icon={Landmark}
@@ -91,15 +93,16 @@ export default function NetWorth() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">Net Worth</h1>
-        <Link
+      <PageHeader
+        title="Net Worth"
+        eyebrow="Financial position"
+        actions={<Link
           to="/accounts"
           className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:text-accent-dark"
         >
           Manage Accounts <ArrowRight size={14} />
-        </Link>
-      </div>
+        </Link>}
+      />
 
       <div className="bg-surface border border-line rounded-xl2 shadow-card p-4 sm:p-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
