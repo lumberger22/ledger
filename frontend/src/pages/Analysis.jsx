@@ -283,6 +283,7 @@ function BiggestChargesCard({ charges, categoryBreakdown }) {
 }
 
 function BudgetStreakCard({ history }) {
+  const [expandedMonth, setExpandedMonth] = useState(null);
   if (!history || history.length === 0) {
     return (
       <p className="text-sm text-ink-500 py-10 text-center">
@@ -347,11 +348,18 @@ function BudgetStreakCard({ history }) {
               {currency(cat.budget)} budgeted / month
             </p>
             <div className="flex gap-1">
-              {cat.months.map((m, i) => (
-                <div
+              {cat.months.map((m, i) => {
+                const monthKey = `${cat.category_id}-${i}`;
+                const isExpanded = expandedMonth === monthKey;
+                return (
+                <button
                   key={i}
+                  type="button"
                   title={barTooltip(m)}
-                  className="flex-1 flex flex-col items-center gap-1 cursor-default"
+                  aria-label={barTooltip(m)}
+                  aria-expanded={isExpanded}
+                  onClick={() => setExpandedMonth(isExpanded ? null : monthKey)}
+                  className="flex-1 flex flex-col items-center gap-1 cursor-pointer rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-500"
                 >
                   <span
                     className={`h-2.5 w-full rounded-sm ${dotClass(m.status)}`}
@@ -359,8 +367,12 @@ function BudgetStreakCard({ history }) {
                   <span className="text-[10px] text-ink-500">
                     {formatMonthShort(m.month)}
                   </span>
-                </div>
-              ))}
+                  <span className={`${isExpanded ? "" : "hidden"} text-[10px] text-ink-600 text-center`}>
+                    {barTooltip(m)}
+                  </span>
+                </button>
+                );
+              })}
             </div>
           </li>
         );
