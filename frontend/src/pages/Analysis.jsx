@@ -12,6 +12,8 @@ import {
   ChevronDown,
   ChevronUp,
   PiggyBank,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { getAnalysis } from "../api/analysis";
 import PeriodFilter from "../components/PeriodFilter";
@@ -19,6 +21,7 @@ import CategoryBadge from "../components/CategoryBadge";
 import CategoryBreakdownChart from "../components/charts/CategoryBreakdownChart";
 import TrendChart from "../components/charts/TrendChart";
 import EmptyState from "../components/EmptyState";
+import CustomizableCards from "../components/CustomizableCards";
 import { formatMonthShort, formatMonthYear } from "../utils/date";
 
 /**
@@ -482,21 +485,23 @@ function PeriodComparisonCard({ data, totalMomPct }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {cards.map((card) => (
-        <AnalysisCard key={card.label} className="p-4">
-          <p className="text-xs font-medium text-ink-500 uppercase tracking-wide mb-1">
-            {card.label}
-          </p>
-          <div className="flex items-center gap-2">
-            <p className="font-display font-bold text-xl text-ink-900 tabular">
-              {currency(card.value)}
+    <AnalysisCard title="Period Comparison">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {cards.map((card) => (
+          <div key={card.label} className="rounded-lg bg-canvas/50 p-3">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-500">
+              {card.label}
             </p>
-            {card.mom !== undefined && <MoMBadge pct={card.mom} />}
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-display text-xl font-bold tabular text-ink-900">
+                {currency(card.value)}
+              </p>
+              {card.mom !== undefined && <MoMBadge pct={card.mom} />}
+            </div>
           </div>
-        </AnalysisCard>
-      ))}
-    </div>
+        ))}
+      </div>
+    </AnalysisCard>
   );
 }
 
@@ -676,7 +681,15 @@ function RecurringVsOneTimeCard({ data, className = "" }) {
 }
 
 function PaceProjectionCard({ data, className = "" }) {
-  if (Object.keys(data.pace_projection || {}).length === 0) return null;
+  if (Object.keys(data.pace_projection || {}).length === 0) {
+    return (
+      <AnalysisCard title="Pace Projection" icon={Gauge} className={className}>
+        <p className="py-6 text-center text-sm text-ink-500">
+          No projection data for this period.
+        </p>
+      </AnalysisCard>
+    );
+  }
 
   const firstProjection = Object.values(data.pace_projection)[0];
 
@@ -725,40 +738,111 @@ function BudgetVarianceCard({ data, className = "" }) {
   );
 }
 
-function AnalysisContent({ data, totalMomPct }) {
+function AnalysisContent({
+  data,
+  totalMomPct,
+  noData,
+  period,
+  setPeriod,
+  customRange,
+  setCustomRange,
+}) {
   const [showAllSources, setShowAllSources] = useState(false);
+  const cards = [
+    {
+      id: "period-comparison",
+      title: "Period Comparison",
+      content: <PeriodComparisonCard data={data} totalMomPct={totalMomPct} />,
+    },
+    {
+      id: "category-breakdown",
+      title: "Category Breakdown",
+      content: <CategoryBreakdownCard data={data} />,
+    },
+    {
+      id: "spending-trend",
+      title: "6-Month Spending Trend",
+      content: <SpendingTrendCard data={data} />,
+    },
+    {
+      id: "category-trend",
+      title: "Category Trend Over Time",
+      content: <CategoryTrendSection data={data} />,
+    },
+    {
+      id: "biggest-charges",
+      title: "Biggest Charges This Period",
+      content: <BiggestChargesSection data={data} />,
+    },
+    {
+      id: "top-spending-sources",
+      title: "Top Spending Sources",
+      content: (
+        <TopSpendingSourcesCard
+          data={data}
+          showAllSources={showAllSources}
+          onToggle={() => setShowAllSources((value) => !value)}
+        />
+      ),
+    },
+    {
+      id: "pace-projection",
+      title: "Pace Projection",
+      content: <PaceProjectionCard data={data} />,
+    },
+    {
+      id: "budget-variance-history",
+      title: "Budget Variance History",
+      content: <BudgetVarianceCard data={data} />,
+    },
+  ];
 
   return (
-    <div className="space-y-5">
-      <PeriodComparisonCard data={data} totalMomPct={totalMomPct} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
-        {/* Left side */}
-        <CategoryBreakdownCard data={data} className="lg:col-span-2" />
-
-        {/* Right side */}
-        <div className="lg:col-span-3 space-y-5">
-          <SpendingTrendCard data={data} />
-          <CategoryTrendSection data={data} />
+    <CustomizableCards
+      key={noData ? "analysis-empty" : "analysis-with-data"}
+      pageId="analysis"
+      cards={cards}
+      defaultVisible={noData ? [] : cards.map((card) => card.id)}
+      columnsClass="grid-cols-1 lg:grid-cols-2"
+      emptyState={noData ? (
+        <AnalysisEmptyState />
+      ) : (
+        <p className="py-8 text-center text-sm text-ink-500">
+          All cards are hidden. Use Customize to add one back.
+        </p>
+      )}
+      renderToolbar={({ editing, onToggleEdit }) => (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">
+            Analysis
+          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/budget"
+              className="flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold text-ink-700 hover:bg-black/5"
+            >
+              <PiggyBank size={13} />
+              Budget
+            </Link>
+            <PeriodFilter
+              value={period}
+              onChange={setPeriod}
+              options={PERIOD_OPTIONS}
+              customRange={customRange}
+              onCustomRange={(start, end) => setCustomRange({ start, end })}
+            />
+            <button
+              type="button"
+              onClick={onToggleEdit}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold text-ink-700 hover:bg-black/5"
+            >
+              {editing ? <Check size={15} /> : <Pencil size={15} />}
+              {editing ? "Done" : "Customize"}
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
-        {/* Left column: same width Pace Projection used to occupy on its own */}
-        <div className="lg:col-span-2 space-y-5">
-          <BiggestChargesSection data={data} />
-          <TopSpendingSourcesCard
-            data={data}
-            showAllSources={showAllSources}
-            onToggle={() => setShowAllSources((value) => !value)}
-          />
-          <PaceProjectionCard data={data} />
-        </div>
-
-        {/* Right column: fills the rest of the row's width */}
-        <BudgetVarianceCard data={data} className="lg:col-span-3" />
-      </div>
-    </div>
+      )}
+    />
   );
 }
 
@@ -805,33 +889,15 @@ export default function Analysis() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display font-bold text-xl sm:text-2xl text-ink-900">
-          Analysis
-        </h1>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/budget"
-            className="flex items-center gap-1.5 text-sm font-semibold text-ink-700 border border-line hover:bg-black/5 p-2 sm:px-3 sm:py-1.5 rounded-lg"
-          >
-            <PiggyBank size={13} />
-            <span className="hidden sm:inline">Budget</span>
-          </Link>
-          <PeriodFilter
-            value={period}
-            onChange={setPeriod}
-            options={PERIOD_OPTIONS}
-            customRange={customRange}
-            onCustomRange={(start, end) => setCustomRange({ start, end })}
-          />
-        </div>
-      </div>
-
-      {noData ? (
-        <AnalysisEmptyState />
-      ) : (
-        <AnalysisContent data={data} totalMomPct={totalMomPct} />
-      )}
+      <AnalysisContent
+        data={data}
+        totalMomPct={totalMomPct}
+        noData={noData}
+        period={period}
+        setPeriod={setPeriod}
+        customRange={customRange}
+        setCustomRange={setCustomRange}
+      />
     </div>
   );
 }
