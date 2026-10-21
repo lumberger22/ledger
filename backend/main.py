@@ -6,7 +6,15 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from auth import verify_api_key
-from config import ALLOWED_ORIGINS, ENABLE_DOCS, PLAID_CONFIGURED, PLAID_SYNC_INTERVAL_MINUTES, STATIC_DIR
+from config import (
+    ALLOWED_ORIGINS,
+    ENABLE_DOCS,
+    MAX_BACKUP_UPLOAD_BYTES,
+    MAX_PLAID_WEBHOOK_BYTES,
+    PLAID_CONFIGURED,
+    PLAID_SYNC_INTERVAL_MINUTES,
+    STATIC_DIR,
+)
 from db import get_connection, init_db
 from routers import (
     accounts,
@@ -23,6 +31,7 @@ from routers import (
     upload,
 )
 from services.rate_limit import SlidingWindowLimiter, get_client_ip
+from services.request_limits import RequestBodyLimitMiddleware
 
 logger = logging.getLogger("ledger")
 
@@ -31,6 +40,14 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs" if ENABLE_DOCS else None,
     redoc_url="/redoc" if ENABLE_DOCS else None,
+)
+
+app.add_middleware(
+    RequestBodyLimitMiddleware,
+    limits={
+        "/api/settings/restore": MAX_BACKUP_UPLOAD_BYTES,
+        "/api/plaid/webhook": MAX_PLAID_WEBHOOK_BYTES,
+    },
 )
 
 app.add_middleware(

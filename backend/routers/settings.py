@@ -1,15 +1,19 @@
 import io
+import os
 import shutil
+import tempfile
 import zipfile
+import zlib
 from pathlib import Path
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 
-from config import DATA_DIR
+from config import DATA_DIR, MAX_BACKUP_EXPANDED_BYTES, MAX_BACKUP_UPLOAD_BYTES
 from db import DB_PATH, get_connection, init_db
 from models import Settings
 from services.json_store import read_json, write_json
+from services.upload_limits import read_upload_within_limit
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -76,26 +80,78 @@ ALLOWED_BACKUP_FILES = {
 
 
 @router.post("/restore")
-async def restore_backup(file: UploadFile = File(...)):
+async def restore_backup(request: Request, file: UploadFile = File(...)):
     """Restore data from a backup zip (same format as /backup download)."""
     if not file.filename or not file.filename.lower().endswith(".zip"):
-        return {"restored": False, "message": "Upload a .zip backup file."}
+        raise HTTPException(status_code=400, detail="Upload a .zip backup file.")
 
-    content = await file.read()
+    content = await read_upload_within_limit(
+        request, file, MAX_BACKUP_UPLOAD_BYTES
+    )
+    staging_dir = None
     restored: list[str] = []
 
-    with zipfile.ZipFile(io.BytesIO(content)) as zf:
-        for name in zf.namelist():
-            # Ignore directories and macOS metadata.
-            if name.endswith("/") or name.startswith("__MACOSX"):
-                continue
-            basename = Path(name).name
-            if basename not in ALLOWED_BACKUP_FILES:
-                continue
-            dest = DATA_DIR / basename
-            with zf.open(name) as src, open(dest, "wb") as dst:
-                shutil.copyfileobj(src, dst)
-            restored.append(basename)
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as zf:
+            entries = zf.infolist()
+            if len(entries) > 32:
+                raise HTTPException(status_code=400, detail="Backup has too many entries.")
+
+            selected = {}
+            expanded_size = 0
+            for entry in entries:
+                name = entry.filename
+                if entry.is_dir() or name.startswith("__MACOSX/"):
+                    continue
+                basename = Path(name).name
+                if basename not in ALLOWED_BACKUP_FILES:
+                    continue
+                if name != basename or basename in selected or entry.flag_bits & 0x1:
+                    raise HTTPException(status_code=400, detail="Invalid backup archive.")
+                if entry.file_size < 0:
+                    raise HTTPException(status_code=400, detail="Invalid backup archive.")
+                expanded_size += entry.file_size
+                if expanded_size > MAX_BACKUP_EXPANDED_BYTES:
+                    raise HTTPException(
+                        status_code=413, detail="Backup expands beyond the allowed size."
+                    )
+                selected[basename] = entry
+
+            if not selected:
+                raise HTTPException(
+                    status_code=400, detail="Backup contains no supported files."
+                )
+
+            # Extract to a private staging directory first so a truncated or
+            # corrupt archive cannot leave a partially-written live backup.
+            staging_dir = Path(tempfile.mkdtemp(prefix=".restore-", dir=DATA_DIR))
+            for basename, entry in selected.items():
+                staged_file = staging_dir / basename
+                copied = 0
+                with zf.open(entry) as src, open(staged_file, "wb") as dst:
+                    while True:
+                        chunk = src.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        copied += len(chunk)
+                        if copied > entry.file_size:
+                            raise HTTPException(
+                                status_code=400, detail="Invalid backup archive."
+                            )
+                        dst.write(chunk)
+                if copied != entry.file_size:
+                    raise HTTPException(status_code=400, detail="Invalid backup archive.")
+                restored.append(basename)
+
+        for basename in restored:
+            os.replace(staging_dir / basename, DATA_DIR / basename)
+    except HTTPException:
+        raise
+    except (zipfile.BadZipFile, OSError, RuntimeError, EOFError, zlib.error) as exc:
+        raise HTTPException(status_code=400, detail="Invalid backup archive.") from exc
+    finally:
+        if staging_dir is not None:
+            shutil.rmtree(staging_dir, ignore_errors=True)
 
     if "charges.db" in restored:
         init_db()

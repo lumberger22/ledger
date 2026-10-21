@@ -19,6 +19,7 @@ COPY --from=frontend-build /app/frontend/dist ./static
 
 ENV PORT=8000
 ENV DATA_DIR=/data
+ENV APP_ENV=production
 
 # Run as a non-root user so a dependency vulnerability or upload-parsing bug
 # can't lead to root-level code execution inside the container (see

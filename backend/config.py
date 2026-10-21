@@ -32,19 +32,13 @@ DB_PATH = DATA_DIR / "charges.db"
 
 # When set, all /api/* routes (except /api/health) require X-API-Key header.
 API_KEY: str | None = os.getenv("API_KEY") or None
+APP_ENV: str = os.getenv("APP_ENV", "development").strip().lower()
 
-# API_KEY is this app's only credential (see backend/auth.py's rate-limited
-# lockout) -- warn loudly if it's short enough to be brute-forceable, so a
-# weak key doesn't silently undermine that protection. 20 chars is a soft
-# floor; generate a real one with:
-#   python -c "import secrets; print(secrets.token_urlsafe(32))"
-if API_KEY and len(API_KEY) < 20:
-    logger.warning(
-        "API_KEY is set but short (%d chars). Since it's Ledger's only "
-        "credential, use a long random value instead: "
-        'python -c "import secrets; print(secrets.token_urlsafe(32))"',
-        len(API_KEY),
-    )
+# A production image must never start with auth disabled or a guessable key.
+# Local development keeps the existing no-key behavior.
+if APP_ENV == "production":
+    if not API_KEY:
+        raise RuntimeError("API_KEY is required when APP_ENV=production")
 
 # Comma-separated list of allowed CORS origins. Empty = same-origin only in production.
 _allowed = os.getenv("ALLOWED_ORIGINS", "")
@@ -65,6 +59,17 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 # routers/income.py) buffer the whole file in memory with no cap of their
 # own -- see services/upload_limits.py.
 MAX_UPLOAD_BYTES: int = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))  # 10 MB
+
+# Request and decompressed-archive caps for sensitive/admin endpoints.
+MAX_BACKUP_UPLOAD_BYTES: int = int(
+    os.getenv("MAX_BACKUP_UPLOAD_BYTES", str(25 * 1024 * 1024))
+)
+MAX_BACKUP_EXPANDED_BYTES: int = int(
+    os.getenv("MAX_BACKUP_EXPANDED_BYTES", str(128 * 1024 * 1024))
+)
+MAX_PLAID_WEBHOOK_BYTES: int = int(
+    os.getenv("MAX_PLAID_WEBHOOK_BYTES", str(1024 * 1024))
+)
 
 # ---------- Plaid ----------
 

@@ -26,6 +26,18 @@ echo "==> Verifying Docker image..."
 docker image inspect ledger > /dev/null
 echo "    Image verified."
 
+echo "==> Checking production authentication configuration..."
+if ! docker run --rm \
+  --env-file .env \
+  -e APP_ENV=production \
+  --entrypoint python ledger \
+  -c 'import os, sys; sys.exit(0 if os.getenv("API_KEY") else 1)'; then
+    echo "ERROR: production API_KEY must be set."
+    echo "Update ~/ledger/.env before deploying; the running container was not stopped."
+    exit 1
+fi
+echo "    Production API_KEY is set."
+
 echo "==> Stopping old container..."
 docker stop ledger 2>/dev/null || true
 
@@ -51,7 +63,8 @@ echo "    user_data now owned by ${APP_UID}:${APP_GID} (appuser)"
 echo "==> Starting new container..."
 docker run -d \
   --name ledger \
-  -p 8000:8000 \
+  -p 127.0.0.1:8000:8000 \
+  -e APP_ENV=production \
   --env-file .env \
   -v ~/ledger/user_data:/data \
   ledger

@@ -42,7 +42,8 @@ echo "    user_data now owned by ${APP_UID}:${APP_GID} (appuser)"
 echo "==> Starting container from ledger:prev..."
 docker run -d \
   --name ledger \
-  -p 8000:8000 \
+  -p 127.0.0.1:8000:8000 \
+  -e APP_ENV=production \
   --env-file .env \
   -v ~/ledger/user_data:/data \
   ledger:prev

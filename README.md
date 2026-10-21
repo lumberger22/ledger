@@ -274,6 +274,8 @@ whole connect → sync → review flow before linking anything real.
 Ledger runs in production as a single Docker container on an EC2 instance,
 exposed at **lucasledger.uk** through a Cloudflare Tunnel (which also
 provides the HTTPS that Plaid Link and Plaid webhooks require).
+The container port is bound to `127.0.0.1:8000` so it is reachable by the
+host's tunnel client but not published on the EC2 network interfaces.
 
 ### Environment
 
@@ -283,8 +285,10 @@ injects environment variables into the container):
 | Variable | Purpose |
 |----------|---------|
 | `DATA_DIR` | Persistent data directory (a mounted volume/bind mount, e.g. `/data`) |
-| `API_KEY` | Long random string (e.g. `openssl rand -hex 32`) — required in production |
+| `API_KEY` | App password — required in production |
 | `ALLOWED_ORIGINS` | Leave unset for same-origin (the normal production setup) |
+| `MAX_BACKUP_UPLOAD_BYTES` / `MAX_BACKUP_EXPANDED_BYTES` | Restore archive limits (defaults: 25 MB uploaded, 128 MB expanded) |
+| `MAX_PLAID_WEBHOOK_BYTES` | Plaid webhook request limit (default: 1 MB) |
 | `PLAID_CLIENT_ID` / `PLAID_SECRET` / `PLAID_ENV` / `PLAID_TOKEN_ENCRYPTION_KEY` | See [Connecting accounts with Plaid](#connecting-accounts-with-plaid) |
 | `PLAID_WEBHOOK_URL` | e.g. `https://lucasledger.uk/api/plaid/webhook` |
 
