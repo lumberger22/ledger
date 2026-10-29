@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Wallet,
   Trash2,
+  Pencil,
   Eye,
   EyeOff,
   Check,
@@ -74,6 +75,10 @@ export default function Accounts() {
   // normal, same-session connect.
   const oauthRedirectUriRef = useRef(null);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [editingManualId, setEditingManualId] = useState(null);
+  const [manualBalanceDraft, setManualBalanceDraft] = useState("");
+  const [savingManualBalance, setSavingManualBalance] = useState(false);
+  const manualBalanceEditorRef = useRef(null);
   const [manualDraft, setManualDraft] = useState({
     name: "",
     type: "depository",
@@ -83,6 +88,18 @@ export default function Accounts() {
   // Missing from this map means expanded — new/first-seen items default open.
   const [expanded, setExpanded] = useState({});
   const [plaidPendingCount, setPlaidPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (editingManualId == null) return;
+    const closeOnOutsideClick = (event) => {
+      if (!manualBalanceEditorRef.current?.contains(event.target)) {
+        setEditingManualId(null);
+        setManualBalanceDraft("");
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [editingManualId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -248,6 +265,34 @@ export default function Accounts() {
   async function handleHideManual(id, hide) {
     await updateAccount(id, { is_hidden: hide });
     load();
+  }
+
+  function startManualBalanceEdit(account) {
+    setError(null);
+    setManualBalanceDraft(String(account.current_balance ?? 0));
+    setEditingManualId(account.id);
+  }
+
+  async function saveManualBalance(account) {
+    const balance = Number(manualBalanceDraft);
+    if (!Number.isFinite(balance)) {
+      setError("Enter a valid account balance.");
+      return;
+    }
+    setSavingManualBalance(true);
+    setError(null);
+    try {
+      const updated = await updateAccount(account.id, { current_balance: balance });
+      setManualAccounts((current) =>
+        current.map((item) => item.id === account.id ? updated : item),
+      );
+      setEditingManualId(null);
+      setManualBalanceDraft("");
+    } catch (err) {
+      setError(err.message || "Couldn't update the account balance.");
+    } finally {
+      setSavingManualBalance(false);
+    }
   }
 
   async function handleDeleteManual(id) {
@@ -561,9 +606,56 @@ export default function Accounts() {
                       )}
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium tabular text-ink-900">
-                        {currency(a.current_balance)}
-                      </span>
+                      {editingManualId === a.id ? (
+                        <div
+                          ref={manualBalanceEditorRef}
+                          className="flex items-center gap-1.5"
+                        >
+                          <input
+                            autoFocus
+                            aria-label={`Edit ${a.name} balance`}
+                            type="number"
+                            step="0.01"
+                            value={manualBalanceDraft}
+                            onChange={(event) => setManualBalanceDraft(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                saveManualBalance(a);
+                              } else if (event.key === "Escape") {
+                                setEditingManualId(null);
+                                setManualBalanceDraft("");
+                              }
+                            }}
+                            className="w-28 text-sm tabular text-right rounded-md border border-line px-2 py-1"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => saveManualBalance(a)}
+                            disabled={savingManualBalance}
+                            title="Save balance"
+                            aria-label={`Save ${a.name} balance`}
+                            className="p-1.5 rounded-md text-good hover:bg-good/10 disabled:opacity-50"
+                          >
+                            <Check size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="text-sm font-medium tabular text-ink-900">
+                            {currency(a.current_balance)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => startManualBalanceEdit(a)}
+                            title="Edit balance"
+                            aria-label={`Edit ${a.name} balance`}
+                            className="p-1.5 rounded-md text-ink-500 hover:bg-black/5"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleHideManual(a.id, !a.is_hidden)}
